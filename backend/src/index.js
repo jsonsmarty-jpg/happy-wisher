@@ -4,7 +4,6 @@ const cors      = require("cors");
 const helmet    = require("helmet");
 const morgan    = require("morgan");
 const rateLimit = require("express-rate-limit");
-const path      = require("path");
 
 const wishesRouter = require("./routes/wishes");
 const errorHandler = require("./middleware/errorHandler");
@@ -38,12 +37,6 @@ app.use("/api", rateLimit({ windowMs: 15*60*1000, max: 100, standardHeaders: tru
 app.use("/api/wishes", rateLimit({ windowMs: 60*60*1000, max: 20 }), wishesRouter);
 
 app.get("/health", (req, res) => res.json({ status: "ok", timestamp: new Date().toISOString() }));
-
-if (process.env.NODE_ENV === "production") {
-  const distPath = path.join(__dirname, "../../frontend/dist");
-  app.use(express.static(distPath));
-  app.get("*", (req, res) => res.sendFile(path.join(distPath, "index.html")));
-}
 
 app.use(errorHandler);
 
