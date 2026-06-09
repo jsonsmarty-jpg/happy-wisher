@@ -1,0 +1,39 @@
+generator client {
+  provider = "prisma-client-js"
+}
+
+datasource db {
+  provider = "postgresql"
+  url      = env("DATABASE_URL")
+}
+
+model Wish {
+  id         String   @id @default(cuid())
+  code       String   @unique
+  type       String
+  sender     String
+  receiver   String?
+  message    String
+  event      String
+  songTitle  String?
+  songArtist String?
+  views      Int      @default(0)
+  createdAt  DateTime @default(now())
+  updatedAt  DateTime @updatedAt
+  gift       Gift?
+
+  @@index([code])
+  @@index([type])
+  @@index([createdAt])
+}
+
+model Gift {
+  id        String   @id @default(cuid())
+  wishId    String   @unique
+  message   String
+  mediaUrl  String?
+  mediaType String?
+  publicId  String?
+  createdAt DateTime @default(now())
+  wish      Wish     @relation(fields: [wishId], references: [id], onDelete: Cascade)
+}
