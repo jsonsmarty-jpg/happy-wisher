@@ -21,7 +21,7 @@ function validateWish({ type, sender, receiver, message, event }) {
     throw Object.assign(new Error("Event required."), { status: 400 });
 }
 
-// ── POST /api/wishes ──────────────────────────────────────────────────────────
+// POST /api/wishes
 router.post("/", upload.fields([
   { name: "giftMedia", maxCount: 1 },
   { name: "giftAudio", maxCount: 1 },
@@ -33,8 +33,7 @@ router.post("/", upload.fields([
       type, sender, receiver, message, event,
       eventLabel, eventEmoji,
       songTitle, songArtist, songUrl, songYtId,
-      giftMessage, background, pin,
-      expiryDays,
+      giftMessage, background, pin, expiryDays,
     } = req.body;
 
     validateWish({ type, sender, receiver, message, event });
@@ -47,7 +46,6 @@ router.post("/", upload.fields([
       if (++attempts > 5) throw new Error("Could not generate unique code.");
     }
 
-    // Calculate expiry
     let expiresAt = null;
     if (expiryDays && parseInt(expiryDays) > 0) {
       expiresAt = new Date();
@@ -62,17 +60,13 @@ router.post("/", upload.fields([
     );
 
     if (hasGift) {
-      let mediaUrl = null, mediaType = null;
-      let audioUrl = null;
+      let mediaUrl = null, mediaType = null, audioUrl = null;
 
       if (req.files?.giftMedia?.[0]) {
         const file = req.files.giftMedia[0];
-        const isVideo = file.mimetype.startsWith("video/");
-        const { url, publicId } = await uploadToCloudinary(
-          file.buffer, file.mimetype
-        );
-        mediaUrl = url;
-        mediaType = isVideo ? "video" : "image";
+        const { url, publicId } = await uploadToCloudinary(file.buffer, file.mimetype);
+        mediaUrl   = url;
+        mediaType  = file.mimetype.startsWith("video/") ? "video" : "image";
         mediaPublicId = publicId;
       }
 
@@ -81,14 +75,13 @@ router.post("/", upload.fields([
         const { url, publicId } = await uploadToCloudinary(
           file.buffer, file.mimetype, "happy-wisher/audio"
         );
-        audioUrl = url;
+        audioUrl      = url;
         audioPublicId = publicId;
       }
 
       giftData = {
         message:      giftMessage?.trim() || null,
-        mediaUrl,
-        mediaType,
+        mediaUrl,     mediaType,
         publicId:     mediaPublicId,
         audioUrl,
         audioPublicId,
@@ -99,17 +92,17 @@ router.post("/", upload.fields([
       data: {
         code, type,
         sender:     sender.trim(),
-        receiver:   receiver?.trim()    || null,
+        receiver:   receiver?.trim()   || null,
         message:    message.trim(),
         event:      event.trim(),
-        eventLabel: eventLabel?.trim()  || null,
-        eventEmoji: eventEmoji?.trim()  || null,
-        songTitle:  songTitle?.trim()   || null,
-        songArtist: songArtist?.trim()  || null,
-        songUrl:    songUrl?.trim()     || null,
-        songYtId:   songYtId?.trim()    || null,
-        background: background?.trim()  || null,
-        pin:        pin?.trim()         || null,
+        eventLabel: eventLabel?.trim() || null,
+        eventEmoji: eventEmoji?.trim() || null,
+        songTitle:  songTitle?.trim()  || null,
+        songArtist: songArtist?.trim() || null,
+        songUrl:    songUrl?.trim()    || null,
+        songYtId:   songYtId?.trim()   || null,
+        background: background?.trim() || null,
+        pin:        pin?.trim()        || null,
         expiresAt,
         ...(giftData && { gift: { create: giftData } }),
       },
@@ -124,7 +117,7 @@ router.post("/", upload.fields([
   }
 });
 
-// ── GET /api/wishes ───────────────────────────────────────────────────────────
+// GET /api/wishes
 router.get("/", async (req, res, next) => {
   try {
     const page  = Math.max(1, parseInt(req.query.page)  || 1);
@@ -137,11 +130,12 @@ router.get("/", async (req, res, next) => {
           OR: [{ expiresAt: null }, { expiresAt: { gt: now } }],
         },
         orderBy: { createdAt: "desc" },
-        skip: (page - 1) * limit, take: limit,
+        skip: (page - 1) * limit,
+        take: limit,
         select: {
-          id:true,code:true,type:true,sender:true,
-          event:true,eventLabel:true,eventEmoji:true,
-          message:true,views:true,createdAt:true,
+          id:true, code:true, type:true, sender:true,
+          event:true, eventLabel:true, eventEmoji:true,
+          message:true, views:true, createdAt:true,
         },
       }),
       prisma.wish.count({
@@ -155,44 +149,37 @@ router.get("/", async (req, res, next) => {
   } catch (err) { next(err); }
 });
 
-// ── GET /api/wishes/:code ─────────────────────────────────────────────────────
+// GET /api/wishes/:code
 router.get("/:code", async (req, res, next) => {
   try {
     const wish = await prisma.wish.findUnique({
       where: { code: req.params.code.toUpperCase() },
       include: {
-        gift: true,
+        gift:      true,
         reactions: { orderBy: { createdAt: "desc" } },
         replies:   { orderBy: { createdAt: "desc" } },
       },
     });
     if (!wish) return res.status(404).json({ error: "Wish not found." });
-
-    // Check expiry
     if (wish.expiresAt && new Date() > wish.expiresAt) {
       return res.status(410).json({ error: "This wish has expired." });
     }
-
-    // Increment views
     prisma.wish.update({
       where: { id: wish.id },
-      data: { views: { increment: 1 } },
+      data:  { views: { increment: 1 } },
     }).catch(() => {});
-
-    // Don't send PIN in response
     const { pin, ...wishData } = wish;
-    const hasPIN = !!pin;
-    res.json({ wish: wishData, hasPIN });
+    res.json({ wish: wishData, hasPIN: !!pin });
   } catch (err) { next(err); }
 });
 
-// ── POST /api/wishes/:code/verify-pin ─────────────────────────────────────────
+// POST /api/wishes/:code/verify-pin
 router.post("/:code/verify-pin", async (req, res, next) => {
   try {
     const wish = await prisma.wish.findUnique({
       where: { code: req.params.code.toUpperCase() },
       include: {
-        gift: true,
+        gift:      true,
         reactions: { orderBy: { createdAt: "desc" } },
         replies:   { orderBy: { createdAt: "desc" } },
       },
@@ -209,7 +196,7 @@ router.post("/:code/verify-pin", async (req, res, next) => {
   } catch (err) { next(err); }
 });
 
-// ── POST /api/wishes/:code/react ──────────────────────────────────────────────
+// POST /api/wishes/:code/react
 router.post("/:code/react", async (req, res, next) => {
   try {
     const wish = await prisma.wish.findUnique({
@@ -225,7 +212,7 @@ router.post("/:code/react", async (req, res, next) => {
   } catch (err) { next(err); }
 });
 
-// ── POST /api/wishes/:code/reply ──────────────────────────────────────────────
+// POST /api/wishes/:code/reply
 router.post("/:code/reply", async (req, res, next) => {
   try {
     const wish = await prisma.wish.findUnique({
@@ -243,7 +230,7 @@ router.post("/:code/reply", async (req, res, next) => {
   } catch (err) { next(err); }
 });
 
-// ── DELETE /api/wishes/:code ──────────────────────────────────────────────────
+// DELETE /api/wishes/:code
 router.delete("/:code", async (req, res, next) => {
   try {
     const wish = await prisma.wish.findUnique({
