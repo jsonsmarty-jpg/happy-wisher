@@ -11,23 +11,26 @@ const upload = multer({
     const allowed = [
       "image/jpeg","image/png","image/gif","image/webp",
       "video/mp4","video/quicktime","video/avi","video/webm","video/x-matroska",
+      "audio/mpeg","audio/mp3","audio/wav","audio/m4a","audio/ogg",
+      "audio/webm","audio/mp4","audio/x-m4a",
     ];
     if (allowed.includes(file.mimetype)) cb(null, true);
     else cb(new Error("Unsupported file type"), false);
   },
 });
 
-function uploadToCloudinary(buffer, mimetype) {
+function uploadToCloudinary(buffer, mimetype, folder="happy-wisher/gifts") {
   return new Promise((resolve, reject) => {
-    const isVideo      = mimetype.startsWith("video/");
-    const resourceType = isVideo ? "video" : "image";
+    const isVideo = mimetype.startsWith("video/");
+    const isAudio = mimetype.startsWith("audio/");
+    const resourceType = (isVideo || isAudio) ? "video" : "image";
     const stream = cloudinary.uploader.upload_stream(
       {
-        folder:        "happy-wisher/gifts",
+        folder,
         resource_type: resourceType,
-        ...(isVideo
-          ? { transformation: [{ duration: "600" }] }
-          : { transformation: [{ width: 1200, crop: "limit" }] }),
+        ...(isVideo ? { transformation: [{ duration: "600" }] } : {}),
+        ...(isAudio ? { format: "mp3" } : {}),
+        ...(!isVideo && !isAudio ? { transformation: [{ width: 1200, crop: "limit" }] } : {}),
       },
       (error, result) => {
         if (error) return reject(error);

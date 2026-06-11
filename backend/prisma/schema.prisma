@@ -8,19 +8,28 @@ datasource db {
 }
 
 model Wish {
-  id         String   @id @default(cuid())
-  code       String   @unique
-  type       String
-  sender     String
-  receiver   String?
-  message    String
-  event      String
-  songTitle  String?
-  songArtist String?
-  views      Int      @default(0)
-  createdAt  DateTime @default(now())
-  updatedAt  DateTime @updatedAt
-  gift       Gift?
+  id          String     @id @default(cuid())
+  code        String     @unique
+  type        String
+  sender      String
+  receiver    String?
+  message     String
+  event       String
+  eventLabel  String?
+  eventEmoji  String?
+  songTitle   String?
+  songArtist  String?
+  songUrl     String?
+  songYtId    String?
+  background  String?
+  pin         String?
+  expiresAt   DateTime?
+  views       Int        @default(0)
+  createdAt   DateTime   @default(now())
+  updatedAt   DateTime   @updatedAt
+  gift        Gift?
+  reactions   Reaction[]
+  replies     Reply[]
 
   @@index([code])
   @@index([type])
@@ -28,12 +37,35 @@ model Wish {
 }
 
 model Gift {
+  id            String   @id @default(cuid())
+  wishId        String   @unique
+  message       String?
+  mediaUrl      String?
+  mediaType     String?
+  publicId      String?
+  audioUrl      String?
+  audioPublicId String?
+  createdAt     DateTime @default(now())
+  wish          Wish     @relation(fields: [wishId], references: [id], onDelete: Cascade)
+}
+
+model Reaction {
   id        String   @id @default(cuid())
-  wishId    String   @unique
-  message   String
-  mediaUrl  String?
-  mediaType String?
-  publicId  String?
+  wishId    String
+  emoji     String
   createdAt DateTime @default(now())
   wish      Wish     @relation(fields: [wishId], references: [id], onDelete: Cascade)
+
+  @@index([wishId])
+}
+
+model Reply {
+  id        String   @id @default(cuid())
+  wishId    String
+  name      String
+  message   String
+  createdAt DateTime @default(now())
+  wish      Wish     @relation(fields: [wishId], references: [id], onDelete: Cascade)
+
+  @@index([wishId])
 }

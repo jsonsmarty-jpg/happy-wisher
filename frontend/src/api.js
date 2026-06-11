@@ -13,8 +13,11 @@ async function request(method, path, body, isFormData = false) {
 }
 
 export const api = {
-  createWish: (formData) => request("POST",   "/api/wishes",        formData, true),
-  getWish:    (code)     => request("GET",    `/api/wishes/${code}`),
-  listWishes: (page = 1) => request("GET",    `/api/wishes?page=${page}&limit=12`),
-  deleteWish: (code)     => request("DELETE", `/api/wishes/${code}`),
+  createWish:  (formData)       => request("POST",   "/api/wishes", formData, true),
+  getWish:     (code)           => request("GET",    `/api/wishes/${code}`),
+  verifyPin:   (code, pin)      => request("POST",   `/api/wishes/${code}/verify-pin`, { pin }),
+  listWishes:  (page = 1)       => request("GET",    `/api/wishes?page=${page}&limit=12`),
+  deleteWish:  (code)           => request("DELETE", `/api/wishes/${code}`),
+  reactToWish: (code, emoji)    => request("POST",   `/api/wishes/${code}/react`, { emoji }),
+  replyToWish: (code, name, message) => request("POST", `/api/wishes/${code}/reply`, { name, message }),
 };
