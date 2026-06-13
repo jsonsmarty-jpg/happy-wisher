@@ -1,4 +1,5 @@
 import { useState, useEffect, useRef } from "react";
+import { api } from "./api.js";
 
 const EVENTS = [
   { id:"birthday",  label:"Birthday",   emoji:"🎂", grad:"linear-gradient(135deg,#FF6B6B,#FF8E53)" },
@@ -46,21 +47,6 @@ const STEPS_SPECIAL = ["Welcome","Type","Details","Message","Event","Song","Gift
 const STEPS_RANDOM  = ["Welcome","Type","Details","Message","Event","Song","Done"];
 
 function getEv(id){ return EVENTS.find(e=>e.id===id)||EVENTS[0]; }
-function genCode(){ const c="ABCDEFGHJKLMNPQRSTUVWXYZ23456789"; let s=""; for(let i=0;i<5;i++) s+=c[Math.floor(Math.random()*c.length)]; return `HW-${new Date().getFullYear()}-${s}`; }
-
-const DB = { wishes: {} };
-const fakeApi = {
-  createWish: (data) => new Promise(res => setTimeout(() => {
-    const wish = { ...data, id: Math.random().toString(36).slice(2), code: genCode(), createdAt: new Date().toISOString() };
-    DB.wishes[wish.code] = wish;
-    res({ wish });
-  }, 900)),
-  getWish: (code) => new Promise((res, rej) => setTimeout(() => {
-    const wish = DB.wishes[code];
-    if (wish) res({ wish });
-    else rej(new Error("Wish not found"));
-  }, 400)),
-};
 
 const CSS = `
 @import url('https://fonts.googleapis.com/css2?family=Cormorant+Garamond:wght@400;600;700&family=Outfit:wght@300;400;500;600;700&display=swap');
@@ -136,14 +122,9 @@ body{font-family:'Outfit',sans-serif;background:var(--bg);color:var(--text);min-
 .song-row{display:flex;align-items:center;gap:10px;border:1.5px solid var(--border);border-radius:12px;padding:clamp(10px,3vw,13px) clamp(10px,3vw,14px);cursor:pointer;background:#FFFEF9;transition:all .25s cubic-bezier(.4,0,.2,1);-webkit-tap-highlight-color:transparent;}
 .song-row:hover{border-color:var(--border2);background:rgba(184,134,11,.05);transform:translateX(3px)}
 .song-row.active{border-color:var(--gold2);background:rgba(184,134,11,.08);transform:translateX(5px);box-shadow:0 0 16px rgba(184,134,11,.1)}
-.play-btn{width:clamp(32px,8vw,36px);height:clamp(32px,8vw,36px);flex-shrink:0;background:linear-gradient(135deg,var(--gold3),var(--gold2));border:none;border-radius:50%;cursor:pointer;color:#fff;font-size:.85rem;display:flex;align-items:center;justify-content:center;transition:transform .2s,box-shadow .2s;box-shadow:0 4px 12px rgba(184,134,11,.3);min-width:32px;min-height:32px;-webkit-tap-highlight-color:transparent;}
-.play-btn:hover{transform:scale(1.12);box-shadow:0 6px 18px rgba(184,134,11,.4)}
-.play-btn.playing{animation:pulse 1s ease-in-out infinite}
-@keyframes pulse{0%,100%{transform:scale(1)}50%{transform:scale(1.1)}}
 .song-info{flex:1;min-width:0}
 .song-title{font-weight:600;font-size:clamp(.8rem,3vw,.88rem);color:var(--text);white-space:nowrap;overflow:hidden;text-overflow:ellipsis}
 .song-artist{font-size:clamp(.68rem,2vw,.75rem);color:var(--muted)}
-.song-dur{font-size:.72rem;color:var(--muted);flex-shrink:0}
 .song-tick{color:var(--gold2);font-size:.95rem;flex-shrink:0}
 .song-yt{font-size:.68rem;color:var(--gold3);text-decoration:none;display:flex;align-items:center;gap:3px;flex-shrink:0;background:rgba(184,134,11,.1);padding:3px 7px;border-radius:20px;border:1px solid var(--border);}
 .song-yt:hover{background:rgba(184,134,11,.2)}
@@ -221,8 +202,6 @@ body{font-family:'Outfit',sans-serif;background:var(--bg);color:var(--text);min-
 @keyframes spin{to{transform:rotate(360deg)}}
 .anim-delay-1{animation-delay:.05s}.anim-delay-2{animation-delay:.1s}.anim-delay-3{animation-delay:.15s}.anim-delay-4{animation-delay:.2s}
 @keyframes fadeDown{from{opacity:0;transform:translateY(-12px)}to{opacity:1;transform:translateY(0)}}
-
-/* ── WISH VIEWER PAGE ── */
 .viewer-page{width:100%;max-width:600px;animation:stepIn .6s cubic-bezier(.4,0,.2,1)}
 .viewer-banner{border-radius:20px 20px 0 0;padding:clamp(28px,6vw,48px) clamp(16px,5vw,32px);text-align:center;position:relative;overflow:hidden;}
 .viewer-banner::before{content:'';position:absolute;inset:0;background:var(--ev-grad);opacity:.18}
@@ -246,7 +225,19 @@ body{font-family:'Outfit',sans-serif;background:var(--bg);color:var(--text);min-
 .viewer-code-val{font-family:'Cormorant Garamond',serif;font-size:clamp(1.1rem,4vw,1.4rem);font-weight:700;letter-spacing:.15em;background:linear-gradient(90deg,#DAA520,#F5DEB3,#DAA520);background-size:200%;-webkit-background-clip:text;-webkit-text-fill-color:transparent;animation:cShimmer 2.5s linear infinite;}
 .viewer-loading{text-align:center;padding:60px 20px}
 .viewer-not-found{text-align:center;padding:40px 20px}
-
+.pin-overlay{position:fixed;inset:0;z-index:500;background:rgba(44,24,16,.95);backdrop-filter:blur(10px);display:flex;align-items:center;justify-content:center;padding:20px;animation:fadeIn .3s ease;}
+.pin-card{background:#FFFDF7;border:1.5px solid var(--border2);border-radius:24px;padding:36px 28px;width:100%;max-width:360px;text-align:center;animation:stepIn .4s cubic-bezier(.4,0,.2,1);}
+.pin-input{width:100%;text-align:center;font-size:1.8rem;letter-spacing:.5em;padding:14px;border:1.5px solid var(--border);border-radius:14px;background:#FFFEF9;color:var(--text);outline:none;font-family:'Cormorant Garamond',serif;}
+.pin-input:focus{border-color:var(--gold2);box-shadow:0 0 0 3px rgba(184,134,11,.12);}
+.reaction-bar{display:flex;gap:8px;flex-wrap:wrap;margin-bottom:16px;}
+.reaction-btn{background:rgba(184,134,11,.06);border:1.5px solid var(--border);border-radius:50px;padding:8px 14px;cursor:pointer;font-size:1.1rem;transition:all .2s;display:flex;align-items:center;gap:5px;-webkit-tap-highlight-color:transparent;}
+.reaction-btn:hover{background:rgba(184,134,11,.14);border-color:var(--border2);transform:scale(1.08)}
+.reaction-btn.reacted{border-color:var(--gold2);background:rgba(184,134,11,.12);}
+.reaction-count{font-size:.75rem;font-weight:600;color:var(--gold3)}
+.reply-section{margin-top:16px}
+.reply-item{background:rgba(184,134,11,.04);border:1px solid var(--border);border-radius:12px;padding:12px 14px;margin-bottom:8px;}
+.reply-name{font-weight:700;font-size:.82rem;color:var(--gold3);margin-bottom:3px}
+.reply-msg{font-size:.85rem;color:var(--text);line-height:1.5}
 @supports(padding:max(0px)){.app{padding-bottom:max(60px,env(safe-area-inset-bottom));}}
 `;
 
@@ -294,11 +285,16 @@ function Btn({children,className="",onClick,disabled,style}){
 }
 
 function GiftModal({onClose,onSave,initial}){
-  const[msg,setMsg]=useState(initial?.msg||"");
+  const[giftMsg,setGiftMsg]=useState(initial?.giftMsg||"");
+  const[file,setFile]=useState(null);
   const[preview,setPreview]=useState(initial?.preview||null);
   const[fileType,setFileType]=useState(initial?.fileType||null);
   const fileRef=useRef();
-  function handleFile(e){const f=e.target.files[0];if(!f)return;setPreview(URL.createObjectURL(f));setFileType(f.type.startsWith("video/")?"video":"image");}
+  function handleFile(e){
+    const f=e.target.files[0];if(!f)return;
+    setFile(f);setPreview(URL.createObjectURL(f));
+    setFileType(f.type.startsWith("video/")?"video":f.type.startsWith("audio/")?"audio":"image");
+  }
   return(
     <div className="gm-overlay" onClick={e=>e.target===e.currentTarget&&onClose()}>
       <div className="gm-card">
@@ -311,22 +307,24 @@ function GiftModal({onClose,onSave,initial}){
         </div>
         <div className="form-group">
           <label className="form-label">Gift Message</label>
-          <textarea className="form-textarea" placeholder="Write something special…" value={msg} onChange={e=>setMsg(e.target.value)} maxLength={300}/>
-          <div className="char-count">{msg.length}/300</div>
+          <textarea className="form-textarea" placeholder="Write something special…" value={giftMsg} onChange={e=>setGiftMsg(e.target.value)} maxLength={300}/>
+          <div className="char-count">{giftMsg.length}/300</div>
         </div>
         <div className="form-group">
-          <label className="form-label">Attach Photo or Video</label>
+          <label className="form-label">Attach Photo, Video or Audio</label>
           <div className="upload-zone" onClick={()=>fileRef.current.click()}>
-            <input ref={fileRef} type="file" accept="image/*,video/*" style={{display:"none"}} onChange={handleFile}/>
+            <input ref={fileRef} type="file" accept="image/*,video/*,audio/*" style={{display:"none"}} onChange={handleFile}/>
             <div className="upload-icon">📎</div>
             <div className="upload-label">{preview?"Change file":"Click to upload"}</div>
-            <div style={{fontSize:".7rem",color:"var(--muted)",marginTop:4}}>Photo or video (max 10 min)</div>
+            <div style={{fontSize:".7rem",color:"var(--muted)",marginTop:4}}>Photo, video or audio file</div>
           </div>
-          {preview&&<div style={{marginTop:10,borderRadius:12,overflow:"hidden"}}>{fileType==="video"?<video src={preview} controls style={{width:"100%",borderRadius:12}}/>:<img src={preview} alt="preview" style={{width:"100%",borderRadius:12,maxHeight:160,objectFit:"cover"}}/>}</div>}
+          {preview&&fileType==="image"&&<img src={preview} alt="preview" style={{width:"100%",borderRadius:12,maxHeight:160,objectFit:"cover",marginTop:10}}/>}
+          {preview&&fileType==="video"&&<video src={preview} controls style={{width:"100%",borderRadius:12,marginTop:10}}/>}
+          {preview&&fileType==="audio"&&<audio src={preview} controls style={{width:"100%",marginTop:10}}/>}
         </div>
         <div style={{display:"flex",gap:10}}>
           <Btn className="btn-ghost btn-block" onClick={onClose}>Cancel</Btn>
-          <Btn className="btn-gold btn-block" onClick={()=>{onSave({msg,preview,fileType});onClose();}} disabled={!msg.trim()}>Save Gift 🎁</Btn>
+          <Btn className="btn-gold btn-block" onClick={()=>{onSave({giftMsg,file,preview,fileType});onClose();}} disabled={!giftMsg.trim()&&!file}>Save Gift 🎁</Btn>
         </div>
       </div>
     </div>
@@ -335,6 +333,9 @@ function GiftModal({onClose,onSave,initial}){
 
 function GiftOpenViewer({gift,onClose}){
   const[opened,setOpened]=useState(false);
+  const mediaUrl=gift.mediaUrl||gift.preview;
+  const fType=gift.mediaType||gift.fileType;
+  const audioUrl=gift.audioUrl||((fType==="audio"&&mediaUrl)?mediaUrl:null);
   return(
     <div className="gift-open-overlay">
       {!opened?(
@@ -346,9 +347,10 @@ function GiftOpenViewer({gift,onClose}){
         <div style={{textAlign:"center",maxWidth:"min(420px,90vw)",animation:"stepIn .5s cubic-bezier(.4,0,.2,1)"}}>
           <div style={{fontSize:"2.8rem",marginBottom:10}}>🎀</div>
           <div style={{fontFamily:"'Cormorant Garamond',serif",fontSize:"clamp(1.2rem,5vw,1.5rem)",marginBottom:14,color:"#DAA520"}}>Your Gift Is Here!</div>
-          {gift.msg&&<div style={{fontStyle:"italic",fontSize:"clamp(.82rem,3vw,.95rem)",color:"rgba(255,253,247,.75)",lineHeight:1.7,marginBottom:14,borderLeft:"2px solid #DAA520",paddingLeft:12}}>"{gift.msg}"</div>}
-          {gift.preview&&gift.fileType==="image"&&<img src={gift.preview} alt="gift" style={{width:"100%",borderRadius:14,marginBottom:14}}/>}
-          {gift.preview&&gift.fileType==="video"&&<video src={gift.preview} controls style={{width:"100%",borderRadius:14,marginBottom:14}}/>}
+          {(gift.giftMsg||gift.message)&&<div style={{fontStyle:"italic",fontSize:"clamp(.82rem,3vw,.95rem)",color:"rgba(255,253,247,.75)",lineHeight:1.7,marginBottom:14,borderLeft:"2px solid #DAA520",paddingLeft:12}}>"{gift.giftMsg||gift.message}"</div>}
+          {mediaUrl&&fType==="image"&&<img src={mediaUrl} alt="gift" style={{width:"100%",borderRadius:14,marginBottom:14}}/>}
+          {mediaUrl&&fType==="video"&&<video src={mediaUrl} controls style={{width:"100%",borderRadius:14,marginBottom:14}}/>}
+          {audioUrl&&<audio src={audioUrl} controls style={{width:"100%",marginBottom:14}}/>}
         </div>
       )}
       <Btn className="btn-ghost" style={{marginTop:20,minWidth:110,background:"rgba(255,253,247,.1)",color:"rgba(255,253,247,.7)",border:"1px solid rgba(255,253,247,.2)"}} onClick={onClose}>Close</Btn>
@@ -356,24 +358,78 @@ function GiftOpenViewer({gift,onClose}){
   );
 }
 
-// ── WISH VIEWER PAGE ──────────────────────────────────────────────────────────
+// ── WISH VIEWER ───────────────────────────────────────────────────────────────
 function WishViewer({code,onBack}){
   const[wish,setWish]=useState(null);
   const[loading,setLoading]=useState(true);
   const[notFound,setNotFound]=useState(false);
+  const[expired,setExpired]=useState(false);
+  const[hasPIN,setHasPIN]=useState(false);
+  const[pinVal,setPinVal]=useState("");
+  const[pinError,setPinError]=useState("");
+  const[pinLoading,setPinLoading]=useState(false);
   const[giftOpen,setGiftOpen]=useState(false);
   const[confetti,setConfetti]=useState(false);
+  const[reactions,setReactions]=useState([]);
+  const[replies,setReplies]=useState([]);
+  const[replyName,setReplyName]=useState("");
+  const[replyMsg,setReplyMsg]=useState("");
+  const[showReply,setShowReply]=useState(false);
+  const[replyLoading,setReplyLoading]=useState(false);
 
   useEffect(()=>{
     setLoading(true);
-    fakeApi.getWish(code)
-      .then(({wish})=>{setWish(wish);setLoading(false);setTimeout(()=>setConfetti(true),600);})
-      .catch(()=>{setNotFound(true);setLoading(false);});
+    api.getWish(code)
+      .then(({wish,hasPIN})=>{
+        if(hasPIN){setHasPIN(true);setLoading(false);return;}
+        setWish(wish);
+        setReactions(wish.reactions||[]);
+        setReplies(wish.replies||[]);
+        setLoading(false);
+        setTimeout(()=>setConfetti(true),600);
+      })
+      .catch(err=>{
+        if(err.message?.includes("expired")) setExpired(true);
+        else setNotFound(true);
+        setLoading(false);
+      });
   },[code]);
+
+  async function handleVerifyPin(){
+    setPinLoading(true);setPinError("");
+    try{
+      const{wish}=await api.verifyPin(code,pinVal);
+      setWish(wish);setReactions(wish.reactions||[]);setReplies(wish.replies||[]);
+      setHasPIN(false);setTimeout(()=>setConfetti(true),600);
+    }catch(err){
+      setPinError(err.message||"Wrong PIN");
+    }finally{setPinLoading(false);}
+  }
+
+  async function handleReact(emoji){
+    try{
+      await api.reactToWish(code,emoji);
+      setReactions(prev=>[...prev,{emoji,id:Date.now()}]);
+    }catch{}
+  }
+
+  async function handleReply(){
+    if(!replyName.trim()||!replyMsg.trim())return;
+    setReplyLoading(true);
+    try{
+      const{reply}=await api.replyToWish(code,replyName,replyMsg);
+      setReplies(prev=>[...prev,reply]);
+      setReplyName("");setReplyMsg("");setShowReply(false);
+    }catch{}finally{setReplyLoading(false);}
+  }
 
   const ev=wish?getEv(wish.event):null;
 
-  if(loading) return(
+  // Count reactions by emoji
+  const reactionCounts={};
+  reactions.forEach(r=>{reactionCounts[r.emoji]=(reactionCounts[r.emoji]||0)+1;});
+
+  if(loading)return(
     <div className="viewer-page">
       <div className="viewer-loading">
         <div style={{fontSize:"2.5rem",marginBottom:16,animation:"floatEmoji 2s ease-in-out infinite"}}>✨</div>
@@ -383,7 +439,36 @@ function WishViewer({code,onBack}){
     </div>
   );
 
-  if(notFound) return(
+  if(hasPIN)return(
+    <div className="viewer-page">
+      <div className="pin-overlay">
+        <div className="pin-card">
+          <div style={{fontSize:"2.5rem",marginBottom:12}}>🔒</div>
+          <div style={{fontFamily:"'Cormorant Garamond',serif",fontSize:"1.5rem",fontWeight:700,marginBottom:6,color:"var(--text)"}}>This wish is protected</div>
+          <div style={{fontSize:".85rem",color:"var(--muted)",marginBottom:20}}>Enter the 4-digit PIN to open it</div>
+          <input className="pin-input" type="number" maxLength={4} placeholder="0000" value={pinVal} onChange={e=>setPinVal(e.target.value.slice(0,4))} onKeyDown={e=>e.key==="Enter"&&handleVerifyPin()}/>
+          {pinError&&<div style={{color:"#E53E3E",fontSize:".82rem",marginTop:8}}>{pinError}</div>}
+          <Btn className="btn-gold btn-block" style={{marginTop:16}} onClick={handleVerifyPin} disabled={pinVal.length<4||pinLoading}>
+            {pinLoading?<><div className="spinner"/>Checking…</>:"Open Wish 🎁"}
+          </Btn>
+          <Btn className="btn-ghost btn-block" style={{marginTop:10}} onClick={onBack}>← Go Back</Btn>
+        </div>
+      </div>
+    </div>
+  );
+
+  if(expired)return(
+    <div className="viewer-page">
+      <div className="viewer-not-found">
+        <div style={{fontSize:"3rem",marginBottom:16}}>⏰</div>
+        <div style={{fontFamily:"'Cormorant Garamond',serif",fontSize:"1.6rem",fontWeight:700,marginBottom:8,color:"var(--text)"}}>Wish Expired</div>
+        <div style={{color:"var(--muted)",fontSize:".88rem",marginBottom:24}}>This wish has expired and is no longer available</div>
+        <Btn className="btn-gold" onClick={onBack}>← Go Back</Btn>
+      </div>
+    </div>
+  );
+
+  if(notFound)return(
     <div className="viewer-page">
       <div className="viewer-not-found">
         <div style={{fontSize:"3rem",marginBottom:16}}>🔍</div>
@@ -397,34 +482,83 @@ function WishViewer({code,onBack}){
   return(
     <div className="viewer-page">
       <Confetti active={confetti}/>
-      <div className="viewer-banner" style={{"--ev-grad":ev?.grad,background:`linear-gradient(160deg,#FFFDF7,#FFF9EE)`}}>
-        <span className="viewer-banner-emoji">{ev?.emoji}</span>
-        <div className="viewer-banner-event">{ev?.label}</div>
+      <div className="viewer-banner" style={{"--ev-grad":ev?.grad,background:"linear-gradient(160deg,#FFFDF7,#FFF9EE)"}}>
+        <span className="viewer-banner-emoji">{wish.eventEmoji||ev?.emoji}</span>
+        <div className="viewer-banner-event">{wish.eventLabel||ev?.label}</div>
       </div>
       <div className="viewer-card">
-        {wish.type==="special"&&<>
-          <div className="viewer-to">A special wish for</div>
-          <div className="viewer-name">{wish.receiver}</div>
-        </>}
+        {wish.type==="special"&&<><div className="viewer-to">A special wish for</div><div className="viewer-name">{wish.receiver}</div></>}
         {wish.type==="random"&&<div style={{marginBottom:12}}><span style={{background:"rgba(184,134,11,.1)",border:"1px solid var(--border2)",borderRadius:50,padding:"4px 14px",fontSize:".75rem",fontWeight:600,color:"var(--gold3)"}}>🌍 Public Wish</span></div>}
         <div className="viewer-msg">"{wish.message}"</div>
         <div className="viewer-from">— With love from <strong>{wish.sender}</strong></div>
-        {wish.song&&(
+
+        {/* Views */}
+        <div style={{fontSize:".75rem",color:"var(--muted)",marginBottom:16,display:"flex",alignItems:"center",gap:5}}>
+          <span>👁</span> {wish.views} {wish.views===1?"view":"views"}
+        </div>
+
+        {/* Song */}
+        {wish.songTitle&&(
           <div className="viewer-song">
             <span style={{fontSize:"1.3rem"}}>🎵</span>
             <div style={{flex:1,minWidth:0}}>
-              <div style={{fontWeight:600,fontSize:".85rem",color:"var(--text)",overflow:"hidden",textOverflow:"ellipsis",whiteSpace:"nowrap"}}>{wish.song.title}</div>
-              <div style={{fontSize:".75rem",color:"var(--muted)"}}>{wish.song.artist}</div>
+              <div style={{fontWeight:600,fontSize:".85rem",color:"var(--text)",overflow:"hidden",textOverflow:"ellipsis",whiteSpace:"nowrap"}}>{wish.songTitle}</div>
+              <div style={{fontSize:".75rem",color:"var(--muted)"}}>{wish.songArtist}</div>
             </div>
-            <a href={wish.song.url} target="_blank" rel="noreferrer" className="song-yt" onClick={e=>e.stopPropagation()}>▶ Play</a>
+            {wish.songUrl&&<a href={wish.songUrl} target="_blank" rel="noreferrer" className="song-yt">▶ Play</a>}
           </div>
         )}
+
+        {/* Gift */}
         {wish.gift&&(
           <button className="viewer-gift-btn" onClick={()=>setGiftOpen(true)}>
             <span className="viewer-gift-btn-emoji">🎁</span>
             You have a gift! Tap to open
           </button>
         )}
+
+        {/* Reactions */}
+        <div style={{marginTop:16,marginBottom:8,fontSize:".75rem",fontWeight:600,color:"var(--gold3)",letterSpacing:".08em",textTransform:"uppercase"}}>React</div>
+        <div className="reaction-bar">
+          {["❤️","😭","🎉","😍","🙏","🔥"].map(emoji=>(
+            <button key={emoji} className="reaction-btn" onClick={()=>handleReact(emoji)}>
+              <span>{emoji}</span>
+              {reactionCounts[emoji]&&<span className="reaction-count">{reactionCounts[emoji]}</span>}
+            </button>
+          ))}
+        </div>
+
+        {/* Replies */}
+        <div className="reply-section">
+          <div style={{fontSize:".75rem",fontWeight:600,color:"var(--gold3)",letterSpacing:".08em",textTransform:"uppercase",marginBottom:10}}>
+            Replies ({replies.length})
+          </div>
+          {replies.map((r,i)=>(
+            <div key={i} className="reply-item">
+              <div className="reply-name">{r.name}</div>
+              <div className="reply-msg">{r.message}</div>
+            </div>
+          ))}
+          {!showReply?(
+            <Btn className="btn-ghost btn-sm" onClick={()=>setShowReply(true)}>💬 Send a Reply</Btn>
+          ):(
+            <div style={{marginTop:10}}>
+              <div className="form-group">
+                <input className="form-input" placeholder="Your name" value={replyName} onChange={e=>setReplyName(e.target.value)}/>
+              </div>
+              <div className="form-group">
+                <textarea className="form-textarea" style={{minHeight:80}} placeholder="Write your reply…" value={replyMsg} onChange={e=>setReplyMsg(e.target.value)} maxLength={300}/>
+              </div>
+              <div style={{display:"flex",gap:8}}>
+                <Btn className="btn-ghost btn-sm" onClick={()=>setShowReply(false)}>Cancel</Btn>
+                <Btn className="btn-gold btn-sm" onClick={handleReply} disabled={!replyName.trim()||!replyMsg.trim()||replyLoading}>
+                  {replyLoading?<><div className="spinner"/>Sending…</>:"Send Reply"}
+                </Btn>
+              </div>
+            </div>
+          )}
+        </div>
+
         <div className="viewer-code" style={{marginTop:16}}>
           <div className="viewer-code-label">Wish Code</div>
           <div className="viewer-code-val">{wish.code}</div>
@@ -436,11 +570,9 @@ function WishViewer({code,onBack}){
   );
 }
 
-// ── MAIN APP ─────────────────────────────────────────────────────────────────
+// ── MAIN APP ──────────────────────────────────────────────────────────────────
 export default function App(){
-  // Check URL for wish code on load
-  const urlCode = new URLSearchParams(window.location.search).get("wish");
-
+  const urlCode=new URLSearchParams(window.location.search).get("wish");
   const[page,setPage]         =useState(urlCode?"viewer":"home");
   const[viewCode,setViewCode] =useState(urlCode||"");
   const[step,setStep]         =useState(0);
@@ -452,8 +584,8 @@ export default function App(){
   const[event,setEvent]       =useState(null);
   const[song,setSong]         =useState(null);
   const[gift,setGift]         =useState(null);
+  const[pin,setPin]           =useState("");
   const[code,setCode]         =useState("");
-  const[playing,setPlaying]   =useState(null);
   const[giftModal,setGiftModal]   =useState(false);
   const[giftViewer,setGiftViewer] =useState(false);
   const[confetti,setConfetti] =useState(false);
@@ -470,11 +602,8 @@ export default function App(){
   const stepName  =steps[step];
 
   function go(s){setKey(k=>k+1);setStep(s);}
-  function next(){go(step+1);}function back(){go(step-1);}
-
-  function stopSong(){
-    if(playing!==null){setPlaying(null);}
-  }
+  function next(){go(step+1);}
+  function back(){go(step-1);}
 
   function canNext(){
     if(stepName==="Type")    return !!wishType;
@@ -484,19 +613,31 @@ export default function App(){
     return true;
   }
 
-  useEffect(()=>{setSong(null);setPlaying(null);},[event]);
+  useEffect(()=>{setSong(null);},[event]);
   function showToast(m,type="success"){setToast({msg:m,type});}
 
   async function handleCreate(){
     setLoading(true);
     try{
-      const{wish}=await fakeApi.createWish({
-        type:wishType,sender:sender.trim(),
-        receiver:isSpecial?receiver.trim():null,
-        message:msg.trim(),event,song,gift,
-      });
+      const fd=new FormData();
+      fd.append("type",wishType);
+      fd.append("sender",sender.trim());
+      fd.append("message",msg.trim());
+      fd.append("event",event);
+      const selectedEvent=getEv(event);
+      fd.append("eventLabel",selectedEvent.label);
+      fd.append("eventEmoji",selectedEvent.emoji);
+      if(isSpecial&&receiver.trim()) fd.append("receiver",receiver.trim());
+      if(song){fd.append("songTitle",song.title);fd.append("songArtist",song.artist);fd.append("songUrl",song.url);}
+      if(pin.trim()) fd.append("pin",pin.trim());
+      if(isSpecial&&gift){
+        if(gift.giftMsg?.trim()) fd.append("giftMessage",gift.giftMsg.trim());
+        if(gift.file){
+          fd.append(gift.fileType==="audio"?"giftAudio":"giftMedia",gift.file);
+        }
+      }
+      const{wish}=await api.createWish(fd);
       setCode(wish.code);
-      // Update URL so link is shareable
       window.history.replaceState({},"",`?wish=${wish.code}`);
       go(step+1);
       setTimeout(()=>setConfetti(true),200);
@@ -506,17 +647,16 @@ export default function App(){
   }
 
   function shareWA(c){window.open(`https://wa.me/?text=${encodeURIComponent(`🌍 Someone sent you a wish!\nOpen it here: ${window.location.origin}?wish=${c}\nWish Code: ${c}\n✨ Happy Wisher`)}`,"_blank");}
-  function shareFB(c){window.open(`https://www.facebook.com/sharer/sharer.php?u=${encodeURIComponent(`${window.location.origin}?wish=${c}`)}&quote=${encodeURIComponent(`Someone sent you a wish! 🎁 Open it: ${window.location.origin}?wish=${c}`)}`,"_blank");}
+  function shareFB(c){window.open(`https://www.facebook.com/sharer/sharer.php?u=${encodeURIComponent(`${window.location.origin}?wish=${c}`)}`,"_blank");}
   function copyLink(c){
-    const url=`${window.location.origin}?wish=${c}`;
-    navigator.clipboard?.writeText(url).catch(()=>{});
+    navigator.clipboard?.writeText(`${window.location.origin}?wish=${c}`).catch(()=>{});
     setCopied(true);showToast("Link copied! 🔗");setTimeout(()=>setCopied(false),2000);
   }
 
   function reset(){
     setStep(0);setKey(k=>k+1);setWishType(null);setSender("");setReceiver("");
-    setMsg("");setEvent(null);setSong(null);setGift(null);setCode("");
-    setConfetti(false);setPlaying(null);
+    setMsg("");setEvent(null);setSong(null);setGift(null);setPin("");setCode("");
+    setConfetti(false);
     window.history.replaceState({},"",window.location.pathname);
   }
 
@@ -525,8 +665,7 @@ export default function App(){
     return(
       <div className="app">
         <style>{CSS}</style>
-        <StarCanvas/>
-        <div className="grain"/>
+        <StarCanvas/><div className="grain"/>
         <div className="orb orb1"/><div className="orb orb2"/><div className="orb orb3"/>
         <div className="topbar"><span className="logo-text">Happy Wisher</span></div>
         <WishViewer code={viewCode} onBack={()=>{setPage("home");setViewCode("");window.history.replaceState({},"",window.location.pathname);}}/>
@@ -540,11 +679,9 @@ export default function App(){
   return(
     <div className="app">
       <style>{CSS}</style>
-      <StarCanvas/>
-      <div className="grain"/>
+      <StarCanvas/><div className="grain"/>
       <div className="orb orb1"/><div className="orb orb2"/><div className="orb orb3"/>
       <div className="topbar"><span className="logo-text">Happy Wisher</span></div>
-
       <div className="card">
         {step>0&&stepName!=="Done"&&(
           <div className="progress-wrap">
@@ -596,6 +733,13 @@ export default function App(){
                   <div className="form-group step-enter anim-delay-2">
                     <label className="form-label">Receiver's Name</label>
                     <input className="form-input" placeholder="Who is this wish for?" value={receiver} onChange={e=>setReceiver(e.target.value)}/>
+                  </div>
+                )}
+                {isSpecial&&(
+                  <div className="form-group step-enter anim-delay-3">
+                    <label className="form-label">PIN Protection (Optional)</label>
+                    <input className="form-input" type="number" placeholder="4-digit PIN e.g. 1234" maxLength={4} value={pin} onChange={e=>setPin(e.target.value.slice(0,4))}/>
+                    <div style={{fontSize:".72rem",color:"var(--muted)",marginTop:4}}>Leave empty for no PIN protection</div>
                   </div>
                 )}
                 <div className="nav-row">
@@ -676,13 +820,13 @@ export default function App(){
                   <div className="gift-zone" onClick={()=>setGiftModal(true)} style={{marginBottom:20}}>
                     <span className="gift-big-emoji">🎁</span>
                     <div className="gift-zone-title">Add a Gift</div>
-                    <div className="gift-zone-sub">Photos, videos & a personal note</div>
+                    <div className="gift-zone-sub">Photos, videos, audio & a personal note</div>
                   </div>
                 ):(
                   <div className="gift-zone has-gift" style={{marginBottom:20}} onClick={()=>setGiftModal(true)}>
                     <span style={{fontSize:"2.2rem",display:"block",marginBottom:8}}>🎀</span>
                     <div className="gift-zone-title" style={{color:"var(--gold3)"}}>Gift Added! ✓</div>
-                    <div className="gift-zone-sub">"{gift.msg.slice(0,50)}{gift.msg.length>50?"…":""}"</div>
+                    <div className="gift-zone-sub">"{(gift.giftMsg||"").slice(0,50)}{(gift.giftMsg||"").length>50?"…":""}"</div>
                     <div style={{marginTop:10}}>
                       <Btn className="btn-ghost btn-sm" onClick={e=>{e.stopPropagation();setGiftViewer(true);}}>Preview 👁</Btn>
                     </div>
@@ -703,7 +847,7 @@ export default function App(){
                   <span className="done-emoji">🎉</span>
                   <div className="done-type-badge">{isSpecial?"🎁 Special Wish":"🌍 Random Wish"}</div>
                   <div className="step-title" style={{fontSize:"clamp(1.4rem,5vw,1.9rem)"}}>Wish Created!</div>
-                  <div className="step-sub">Your wish is saved and ready to share ✨</div>
+                  <div className="step-sub">Saved to database — share the link! ✨</div>
                 </div>
                 <div className="wish-preview step-enter anim-delay-1">
                   <div className="wp-banner" style={{"--ev-grad":ev?.grad}}>
@@ -724,17 +868,13 @@ export default function App(){
                         <a href={song.url} target="_blank" rel="noreferrer" className="song-yt">▶</a>
                       </div>
                     )}
-                    {gift&&(
-                      <div style={{marginTop:12}}>
-                        <Btn className="btn-ghost btn-sm" onClick={()=>setGiftViewer(true)}>🎁 View Gift Inside</Btn>
-                      </div>
-                    )}
+                    {pin&&<div style={{marginTop:8,fontSize:".78rem",color:"var(--muted)"}}>🔒 PIN protected</div>}
                   </div>
                 </div>
                 <div className="code-wrap step-enter anim-delay-2">
                   <div className="code-label">Your Wish Code</div>
                   <div className="code-val">{code}</div>
-                  <div className="code-sub">Share the link below — anyone who opens it sees the wish!</div>
+                  <div className="code-sub">Share the link — anyone who opens it sees the wish!</div>
                 </div>
                 <div style={{marginBottom:16}} className="step-enter anim-delay-3">
                   <div style={{fontSize:".7rem",fontWeight:600,color:"var(--gold3)",letterSpacing:".1em",textTransform:"uppercase",marginBottom:8}}>Share Your Wish</div>
@@ -751,11 +891,9 @@ export default function App(){
           </div>
         </div>
       </div>
-
       <div style={{marginTop:24,textAlign:"center",fontSize:".7rem",color:"var(--muted)",animation:"fadeDown .8s .4s both",letterSpacing:".04em"}}>
         powered by <span style={{color:"var(--gold3)",fontWeight:600}}>HYPER Company</span>
       </div>
-
       {giftModal&&<GiftModal initial={gift} onClose={()=>setGiftModal(false)} onSave={g=>{setGift(g);showToast("Gift saved! 🎁");}}/>}
       {giftViewer&&gift&&<GiftOpenViewer gift={gift} onClose={()=>setGiftViewer(false)}/>}
       {toast&&<Toast msg={toast.msg} type={toast.type} onDone={()=>setToast(null)}/>}
