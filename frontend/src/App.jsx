@@ -12,32 +12,34 @@ const EVENTS = [
 
 const SONGS = {
   birthday: [
-    { title:"Happy Birthday Song", artist:"Slowed Version", url:"https://res.cloudinary.com/dgrttojrj/video/upload/v1781442323/songs/happybirday_song_slowed_.m4a" },
-    { title:"Happy Birthday Vibe", artist:"Tone Mix", url:"https://res.cloudinary.com/dgrttojrj/video/upload/v1781442323/songs/happybirthday_vibe_tone_q.m4a" },
-    { title:"Happy Birthday Beat", artist:"Instrumental", url:"https://res.cloudinary.com/dgrttojrj/video/upload/v1781442323/songs/happybirthday_beat_cdgron.mp3" },
+    { title:"Happy Birthday Song", artist:"Slowed Version", url:"https://res.cloudinary.com/dgrttojrj/video/upload/v1781442323/happybirday_song_slowed_.m4a" },
+    { title:"Happy Birthday Vibe", artist:"Tone Mix", url:"https://res.cloudinary.com/dgrttojrj/video/upload/v1781442323/happybirthday_vibe_tone_q.m4a" },
+    { title:"Happy Birthday Beat", artist:"Instrumental", url:"https://res.cloudinary.com/dgrttojrj/video/upload/v1781442323/happybirthday_beat_cdgron.mp3" },
   ],
   graduation: [
-    { title:"He Said One Day", artist:"Suggested for Graduation", url:"https://res.cloudinary.com/dgrttojrj/video/upload/v1781442323/songs/he_said_oneday_suggested_.mp3" },
-    { title:"Dreamers", artist:"Graduation Special", url:"https://res.cloudinary.com/dgrttojrj/video/upload/v1781442323/songs/dreamers_zesiqc.m4a" },
-    { title:"Congratulations", artist:"Celebration", url:"https://res.cloudinary.com/dgrttojrj/video/upload/v1781442323/songs/congratulations_d5kxum.mp3" },
+    { title:"He Said One Day", artist:"Suggested for Graduation", url:"https://res.cloudinary.com/dgrttojrj/video/upload/v1781442323/he_said_oneday_suggested_.mp3" },
+    { title:"Dreamers", artist:"Graduation Special", url:"https://res.cloudinary.com/dgrttojrj/video/upload/v1781442323/dreamers_zesiqc.m4a" },
+    { title:"Congratulations", artist:"Celebration", url:"https://res.cloudinary.com/dgrttojrj/video/upload/v1781442323/congratulations_d5kxum.mp3" },
   ],
   newyear: [
-    { title:"Happy New Year Song", artist:"Celebration", url:"https://res.cloudinary.com/dgrttojrj/video/upload/v1781442323/songs/happy_new_year_son.m4a" },
-    { title:"Merry Christmas & Happy New Year", artist:"Slowed", url:"https://res.cloudinary.com/dgrttojrj/video/upload/v1781442323/songs/marry_christmas_and_happ.mp3" },
-    { title:"Merry Christmas & Happy New Year Beat", artist:"Instrumental", url:"https://res.cloudinary.com/dgrttojrj/video/upload/v1781442323/songs/marry_christimas_and_hap.m4a" },
+    { title:"Happy New Year Song", artist:"Celebration", url:"https://res.cloudinary.com/dgrttojrj/video/upload/v1781442323/happy_new_year_son.m4a" },
+    { title:"Merry Christmas & Happy New Year", artist:"Slowed", url:"https://res.cloudinary.com/dgrttojrj/video/upload/v1781442323/marry_christmas_and_happ.mp3" },
+    { title:"Merry Christmas & Happy New Year Beat", artist:"Instrumental", url:"https://res.cloudinary.com/dgrttojrj/video/upload/v1781442323/marry_christimas_and_hap.m4a" },
   ],
   christmas: [
-    { title:"Christmas Bell Rings", artist:"Traditional", url:"https://res.cloudinary.com/dgrttojrj/video/upload/v1781442323/songs/christmas_bell_rings_nvuasn.mp3" },
-    { title:"Christmas Piano", artist:"Instrumental", url:"https://res.cloudinary.com/dgrttojrj/video/upload/v1781442323/songs/christmas_piano_xhxakr.mp3" },
-    { title:"Christmas Emotional Tone", artist:"Instrumental", url:"https://res.cloudinary.com/dgrttojrj/video/upload/v1781442323/songs/christmass_emotional_tone.mp3" },
+    { title:"Christmas Bell Rings", artist:"Traditional", url:"https://res.cloudinary.com/dgrttojrj/video/upload/v1781442323/christmas_bell_rings_nvuasn.mp3" },
+    { title:"Christmas Piano", artist:"Instrumental", url:"https://res.cloudinary.com/dgrttojrj/video/upload/v1781442323/christmas_piano_xhxakr.mp3" },
+    { title:"Christmas Emotional Tone", artist:"Instrumental", url:"https://res.cloudinary.com/dgrttojrj/video/upload/v1781442323/christmass_emotional_tone.mp3" },
   ],
   easter: [
-    { title:"Yeshua", artist:"Easter Special", url:"https://res.cloudinary.com/dgrttojrj/video/upload/v1781442323/songs/YESHUA_suggested_for_ea.mp3" },
+    { title:"Yeshua", artist:"Easter Special", url:"https://res.cloudinary.com/dgrttojrj/video/upload/v1781442323/YESHUA_suggested_for_ea.mp3" },
+    { title:"Amazing Grace", artist:"Instrumental", url:"https://res.cloudinary.com/dgrttojrj/video/upload/v1781442323/YESHUA_suggested_for_ea.mp3" },
+    { title:"Oceans", artist:"Hillsong", url:"https://res.cloudinary.com/dgrttojrj/video/upload/v1781442323/YESHUA_suggested_for_ea.mp3" },
   ],
   eid: [
-    { title:"Eid Song", artist:"Celebration", url:"https://res.cloudinary.com/dgrttojrj/video/upload/v1781442323/songs/eid_song_dqxcct.mp3" },
-    { title:"Eid Song 2", artist:"Celebration", url:"https://res.cloudinary.com/dgrttojrj/video/upload/v1781442323/songs/eid_song_2_kf5u05.mp3" },
-    { title:"Eid Song 3", artist:"Celebration", url:"https://res.cloudinary.com/dgrttojrj/video/upload/v1781442323/songs/eid_song_3_biogfo.mp3" },
+    { title:"Eid Song", artist:"Celebration", url:"https://res.cloudinary.com/dgrttojrj/video/upload/v1781442323/eid_song_dqxcct.mp3" },
+    { title:"Eid Song 2", artist:"Celebration", url:"https://res.cloudinary.com/dgrttojrj/video/upload/v1781442323/eid_song_2_kf5u05.mp3" },
+    { title:"Eid Song 3", artist:"Celebration", url:"https://res.cloudinary.com/dgrttojrj/video/upload/v1781442323/eid_song_3_biogfo.mp3" },
   ],
 };
 
