@@ -210,7 +210,7 @@ body{font-family:'Outfit',sans-serif;background:var(--bg);color:var(--text);min-
 .viewer-banner-event{font-size:.78rem;font-weight:700;letter-spacing:.15em;text-transform:uppercase;color:var(--gold3);position:relative;margin-bottom:4px}
 .viewer-card{background:var(--card);border:1.5px solid var(--border2);border-radius:0 0 20px 20px;padding:clamp(20px,5vw,36px);margin-bottom:16px;box-shadow:0 20px 60px rgba(184,134,11,.1);}
 .viewer-to{font-size:.78rem;color:var(--muted);margin-bottom:4px}
-.viewer-name{font-family:'Cormorant Garamond',serif;font-size:clamp(1.6rem,6vw,2.4rem);font-weight:700;color:var(--text);margin-bottom:16px;animation:nameEntrance 1s cubic-bezier(.4,0,.2,1) .3s both;}
+.viewer-name{font-family:'Cormorant Garamond',serif;font-size:clamp(1.8rem,6vw,2.6rem);font-weight:700;color:var(--text);margin-bottom:16px;animation:nameEntrance 1s cubic-bezier(.4,0,.2,1) .3s both;text-shadow:0 2px 12px rgba(184,134,11,.2);letter-spacing:.02em;border-bottom:2px solid var(--gold2);padding-bottom:10px;}
 @keyframes nameEntrance{from{opacity:0;transform:translateY(10px)}to{opacity:1;transform:translateY(0)}}
 .viewer-msg{font-size:clamp(.88rem,3vw,1rem);line-height:1.85;color:#5C4033;border-left:3px solid var(--gold2);padding-left:16px;font-style:italic;margin-bottom:18px;animation:msgEntrance 1s cubic-bezier(.4,0,.2,1) .5s both;}
 @keyframes msgEntrance{from{opacity:0;transform:translateX(-10px)}to{opacity:1;transform:translateX(0)}}
@@ -236,7 +236,7 @@ body{font-family:'Outfit',sans-serif;background:var(--bg);color:var(--text);min-
 .reaction-count{font-size:.75rem;font-weight:600;color:var(--gold3)}
 .reply-section{margin-top:16px}
 .reply-item{background:rgba(184,134,11,.04);border:1px solid var(--border);border-radius:12px;padding:12px 14px;margin-bottom:8px;}
-.reply-name{font-weight:700;font-size:.82rem;color:var(--gold3);margin-bottom:3px}
+.reply-name{font-weight:700;font-size:.85rem;color:var(--gold3);margin-bottom:3px;display:flex;align-items:center;gap:6px;}
 .reply-msg{font-size:.85rem;color:var(--text);line-height:1.5}
 @supports(padding:max(0px)){.app{padding-bottom:max(60px,env(safe-area-inset-bottom));}}
 `;
@@ -535,8 +535,12 @@ function WishViewer({code,onBack}){
           </div>
           {replies.map((r,i)=>(
             <div key={i} className="reply-item">
-              <div className="reply-name">{r.name}</div>
+              <div className="reply-name">
+                <span style={{width:26,height:26,borderRadius:"50%",background:"rgba(184,134,11,.12)",display:"inline-flex",alignItems:"center",justifyContent:"center",fontSize:"0.8rem",color:"var(--gold3)"}}>{r.name.charAt(0).toUpperCase()}</span>
+                {r.name} replied
+              </div>
               <div className="reply-msg">{r.message}</div>
+              <div style={{fontSize:"0.7rem",color:"var(--muted)",marginTop:6}}>{new Date(r.createdAt).toLocaleDateString("en-US",{month:"short",day:"numeric",hour:"2-digit",minute:"2-digit"})}</div>
             </div>
           ))}
           {!showReply?(
@@ -582,6 +586,7 @@ export default function App(){
   const[receiver,setReceiver] =useState("");
   const[msg,setMsg]           =useState("");
   const[event,setEvent]       =useState(null);
+  const[customEvent,setCustomEvent]=useState("");
   const[song,setSong]         =useState(null);
   const[gift,setGift]         =useState(null);
   const[pin,setPin]           =useState("");
@@ -609,7 +614,7 @@ export default function App(){
     if(stepName==="Type")    return !!wishType;
     if(stepName==="Details") return sender.trim()&&(!isSpecial||receiver.trim());
     if(stepName==="Message") return msg.trim().length>=10;
-    if(stepName==="Event")   return !!event;
+    if(stepName==="Event")   return !!event&&(event!="custom"||customEvent.trim().length>0);
     return true;
   }
 
@@ -623,8 +628,8 @@ export default function App(){
       fd.append("type",wishType);
       fd.append("sender",sender.trim());
       fd.append("message",msg.trim());
-      fd.append("event",event);
-      const selectedEvent=getEv(event);
+      fd.append("event", event==="custom"?customEvent.trim():event);
+      const selectedEvent = event==="custom" ? {label:customEvent.trim()||"Custom", emoji:"✨"} : getEv(event);
       fd.append("eventLabel",selectedEvent.label);
       fd.append("eventEmoji",selectedEvent.emoji);
       if(isSpecial&&receiver.trim()) fd.append("receiver",receiver.trim());
@@ -646,7 +651,7 @@ export default function App(){
     }finally{setLoading(false);}
   }
 
-  function shareWA(c){window.open(`https://wa.me/?text=${encodeURIComponent(`🌍 Someone sent you a wish!\nOpen it here: ${window.location.origin}?wish=${c}\nWish Code: ${c}\n✨ Happy Wisher`)}`,"_blank");}
+  function shareWA(c){window.open(`https://wa.me/?text=${encodeURIComponent(`🥳 Someone sent you a wish!\nOpen it here: ${window.location.origin}?wish=${c}\nWish Code: ${c}\n✨ Happy Wisher`)}`,"_blank");}
   function shareFB(c){window.open(`https://www.facebook.com/sharer/sharer.php?u=${encodeURIComponent(`${window.location.origin}?wish=${c}`)}`,"_blank");}
   function copyLink(c){
     navigator.clipboard?.writeText(`${window.location.origin}?wish=${c}`).catch(()=>{});
@@ -706,7 +711,7 @@ export default function App(){
                 <div className="step-title">What kind of wish?</div>
                 <div className="step-sub">Choose the type that fits your message</div>
                 <div className="type-grid">
-                  {[{id:"special",emoji:"🎁",name:"Special Wish",desc:"Private wish for one person. Add photos, videos & a gift!"},{id:"random",emoji:"🌍",name:"Random Wish",desc:"A public wish shared with the whole world!"}].map((t,i)=>(
+                  {[{id:"special",emoji:"🎁",name:"Special Wish",desc:"Private wish for one person. Add photos, videos & a gift!"},{id:"random",emoji:"🥳",name:"Random Wish",desc:"A public wish shared with the whole world!"}].map((t,i)=>(
                     <div key={t.id} className={`type-card anim-delay-${i+1} step-enter ${wishType===t.id?"active":""}`} onClick={()=>setWishType(t.id)}>
                       <span className="type-card-emoji">{t.emoji}</span>
                       <div className="type-card-name">{t.name}</div>
@@ -768,7 +773,7 @@ export default function App(){
             {stepName==="Event"&&(
               <>
                 <div className="step-title">Pick an occasion</div>
-                <div className="step-sub">Sets the mood and music 🎵</div>
+                <div className="step-sub">Sets the mood and music 🎵 — or create your own!</div>
                 <div className="event-grid" style={{marginBottom:20}}>
                   {EVENTS.map((ev,i)=>(
                     <div key={ev.id} className={`event-chip step-enter anim-delay-${Math.min(i+1,5)} ${event===ev.id?"active":""}`} onClick={()=>setEvent(ev.id)}>
@@ -776,7 +781,17 @@ export default function App(){
                       <span className="event-label">{ev.label}</span>
                     </div>
                   ))}
+                  <div className={`event-chip step-enter anim-delay-${Math.min(EVENTS.length+1,5)} ${event==="custom"?"active":""}`} onClick={()=>setEvent("custom")}> 
+                    <span className="event-emoji">✨</span>
+                    <span className="event-label">Custom</span>
+                  </div>
                 </div>
+                {event==="custom"&&(
+                  <div className="form-group step-enter anim-delay-1">
+                    <label className="form-label">Custom occasion</label>
+                    <input className="form-input" placeholder="e.g. Anniversary, Graduation Party" value={customEvent} onChange={e=>setCustomEvent(e.target.value)} autoFocus/>
+                  </div>
+                )}
                 <div className="nav-row">
                   <Btn className="btn-ghost" onClick={back}>← Back</Btn>
                   <Btn className="btn-gold btn-block" onClick={next} disabled={!canNext()}>Continue →</Btn>
