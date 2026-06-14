@@ -376,14 +376,8 @@ function WishViewer({code,onBack}){
   const[replyMsg,setReplyMsg]=useState("");
   const[showReply,setShowReply]=useState(false);
   const[replyLoading,setReplyLoading]=useState(false);
-  const viewerAudioRef = useRef(new Audio());
-  const[songPlaying,setSongPlaying]=useState(false);
 
   useEffect(()=>{
-    return ()=>{
-      viewerAudioRef.current.pause();
-    };
-  },[]);
     setLoading(true);
     api.getWish(code)
       .then(({wish,hasPIN})=>{
@@ -512,20 +506,19 @@ function WishViewer({code,onBack}){
               <div style={{fontSize:".75rem",color:"var(--muted)"}}>{wish.songArtist}</div>
             </div>
             {wish.songUrl&&(
-              <button type="button" className="song-yt" onClick={()=>{
-                if(songPlaying){
-                  viewerAudioRef.current.pause();
-                  setSongPlaying(false);
-                } else {
-                  viewerAudioRef.current.src=wish.songUrl;
-                  viewerAudioRef.current.load();
-                  viewerAudioRef.current.play()
-                    .then(()=>setSongPlaying(true))
-                    .catch(err=>console.error("Audio error:",err));
-                }
-              }}>
-                {songPlaying?"⏸":"▶"}
-              </button>
+              <>
+                <button type="button" className="song-yt" onClick={()=>{
+                  const audio=document.getElementById("hw-viewer-audio");
+                  if(!audio) return;
+                  if(audio.paused || audio.src!==wish.songUrl){
+                    audio.src=wish.songUrl;
+                    audio.play().catch(()=>{});
+                  } else {
+                    audio.pause();
+                  }
+                }}>▶</button>
+                <audio id="hw-viewer-audio" style={{display:"none"}} />
+              </>
             )}
           </div>
         )}
@@ -609,7 +602,6 @@ export default function App(){
   const[event,setEvent]       =useState(null);
   const[customEvent,setCustomEvent]=useState("");
   const[playing,setPlaying]   =useState(null);
-  const audioRef             = useRef(new Audio());
   const[song,setSong]         =useState(null);
   const[gift,setGift]         =useState(null);
   const[pin,setPin]           =useState("");
@@ -641,19 +633,7 @@ export default function App(){
     return true;
   }
 
-  useEffect(()=>{
-    setSong(null);
-    audioRef.current.pause();
-    audioRef.current.src = "";
-    setPlaying(null);
-  },[event]);
-
-  useEffect(()=>{
-    audioRef.current.pause();
-    audioRef.current.src = "";
-    setPlaying(null);
-  },[step]);
-
+  useEffect(()=>{setSong(null);},[event]);
   function showToast(m,type="success"){setToast({msg:m,type});}
 
   async function handleCreate(){
@@ -696,8 +676,6 @@ export default function App(){
   function reset(){
     setStep(0);setKey(k=>k+1);setWishType(null);setSender("");setReceiver("");
     setMsg("");setEvent(null);setSong(null);setGift(null);setPin("");setCode("");
-    audioRef.current.pause();
-    audioRef.current.src = "";
     setConfetti(false);
     window.history.replaceState({},"",window.location.pathname);
   }
@@ -847,18 +825,24 @@ export default function App(){
                   {songs.map((s,i)=>(
                     <div key={i} className={`song-row step-enter anim-delay-${i+1} ${song?.title===s.title?"active":""}`} onClick={()=>setSong(song?.title===s.title?null:s)}>
                       <button type="button" className="song-yt" style={{marginRight:10,flexShrink:0}} onClick={e=>{
-                          e.preventDefault();
                           e.stopPropagation();
+                          const prev=document.getElementById("hw-audio-player");
+                          if(prev){ prev.pause(); }
                           if(playing===i){
-                            audioRef.current.pause();
                             setPlaying(null);
                           } else {
-                            audioRef.current.pause();
-                            audioRef.current.src=s.url;
-                            audioRef.current.load();
-                            audioRef.current.play()
-                              .then(()=>setPlaying(i))
-                              .catch(err=>console.error("Audio error:",err));
+                            const audio=document.getElementById("hw-audio-player");
+                            if(audio){
+                              audio.src=s.url;
+                              audio.load();
+                              audio.play().then(()=>{
+                                setPlaying(i);
+                              }).catch(err=>{
+                                console.log("Play error:",err);
+                                setPlaying(i);
+                              });
+                            }
+                            setSong(s);
                           }
                         }}>
                         {playing===i?"⏸":"▶"}
@@ -871,17 +855,17 @@ export default function App(){
                     </div>
                   ))}
                 </div>
-                <audio ref={audioRef} style={{display:"none"}} preload="none" />
+                <audio id="hw-audio-player" style={{display:"none"}} preload="none" />
                 <div className="nav-row">
                   <Btn className="btn-ghost" onClick={()=>{
-                    audioRef.current.pause();
-                    audioRef.current.src = "";
+                    const audio=document.getElementById("hw-audio-player");
+                    if(audio){audio.pause();audio.src="";}
                     setPlaying(null);
                     back();
                   }}>← Back</Btn>
                   <Btn className="btn-gold btn-block" onClick={()=>{
-                    audioRef.current.pause();
-                    audioRef.current.src = "";
+                    const audio=document.getElementById("hw-audio-player");
+                    if(audio){audio.pause();audio.src="";}
                     setPlaying(null);
                     isSpecial?next():handleCreate();
                   }} disabled={loading}>
