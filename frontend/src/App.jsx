@@ -823,19 +823,30 @@ export default function App(){
                 </div>
                 <div className="song-list" style={{marginBottom:20,marginTop:14}}>
                   {songs.map((s,i)=>(
-                    <div key={i} className={`song-row step-enter anim-delay-${i+1} ${song?.title===s.title?"active":""}`} onClick={()=>{
-                        const audio=document.getElementById("hw-audio-player");
-                        if(playing===i){
-                          if(audio){audio.pause();}
-                          setPlaying(null);
-                          setSong(null);
-                        } else {
-                          if(audio){audio.src=s.url;audio.play().catch(()=>{});}
-                          setPlaying(i);
-                          setSong(s);
-                        }
-                      }}>
-                      <button type="button" className="song-yt" style={{marginRight:10,flexShrink:0}}>{playing===i?"⏸":"▶"}</button>
+                    <div key={i} className={`song-row step-enter anim-delay-${i+1} ${song?.title===s.title?"active":""}`} onClick={()=>setSong(song?.title===s.title?null:s)}>
+                      <button type="button" className="song-yt" style={{marginRight:10,flexShrink:0}} onClick={e=>{
+                          e.stopPropagation();
+                          const prev=document.getElementById("hw-audio-player");
+                          if(prev){ prev.pause(); }
+                          if(playing===i){
+                            setPlaying(null);
+                          } else {
+                            const audio=document.getElementById("hw-audio-player");
+                            if(audio){
+                              audio.src=s.url;
+                              audio.load();
+                              audio.play().then(()=>{
+                                setPlaying(i);
+                              }).catch(err=>{
+                                console.log("Play error:",err);
+                                setPlaying(i);
+                              });
+                            }
+                            setSong(s);
+                          }
+                        }}>
+                        {playing===i?"⏸":"▶"}
+                      </button>
                       <div className="song-info">
                         <div className="song-title">{s.title}</div>
                         <div className="song-artist">{s.artist}</div>
@@ -844,7 +855,7 @@ export default function App(){
                     </div>
                   ))}
                 </div>
-                <audio id="hw-audio-player" style={{display:"none"}} />
+                <audio id="hw-audio-player" style={{display:"none"}} preload="none" />
                 <div className="nav-row">
                   <Btn className="btn-ghost" onClick={()=>{
                     const audio=document.getElementById("hw-audio-player");
