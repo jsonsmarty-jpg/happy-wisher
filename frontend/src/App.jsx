@@ -11,35 +11,33 @@ const EVENTS = [
 ];
 
 const SONGS = {
-  birthday:   [
-    {title:"Count on Me",artist:"Bruno Mars",url:"https://www.youtube.com/watch?v=7apZMNsxAbY"},
-    {title:"Perfect",artist:"Ed Sheeran",url:"https://www.youtube.com/watch?v=2Vv-BfVoq4g"},
-    {title:"A Thousand Years",artist:"Christina Perri",url:"https://www.youtube.com/watch?v=rtOvBOTyX00"},
+  birthday: [
+    { title:"Happy Birthday Song", artist:"Slowed Version", url:"https://res.cloudinary.com/dgrttojrj/video/upload/v1781442323/songs/happybirday_song_slowed_.m4a" },
+    { title:"Happy Birthday Vibe", artist:"Tone Mix", url:"https://res.cloudinary.com/dgrttojrj/video/upload/v1781442323/songs/happybirthday_vibe_tone_q.m4a" },
+    { title:"Happy Birthday Beat", artist:"Instrumental", url:"https://res.cloudinary.com/dgrttojrj/video/upload/v1781442323/songs/happybirthday_beat_cdgron.mp3" },
   ],
   graduation: [
-    {title:"Hall of Fame",artist:"The Script ft. will.i.am",url:"https://www.youtube.com/watch?v=mk48xbyNJpA"},
-    {title:"The Climb",artist:"Miley Cyrus",url:"https://www.youtube.com/watch?v=NG2zyeVRcbs"},
-    {title:"Unstoppable",artist:"Sia",url:"https://www.youtube.com/watch?v=cxjvTXo9WWM"},
+    { title:"He Said One Day", artist:"Suggested for Graduation", url:"https://res.cloudinary.com/dgrttojrj/video/upload/v1781442323/songs/he_said_oneday_suggested_.mp3" },
+    { title:"Dreamers", artist:"Graduation Special", url:"https://res.cloudinary.com/dgrttojrj/video/upload/v1781442323/songs/dreamers_zesiqc.m4a" },
+    { title:"Congratulations", artist:"Celebration", url:"https://res.cloudinary.com/dgrttojrj/video/upload/v1781442323/songs/congratulations_d5kxum.mp3" },
   ],
-  newyear:    [
-    {title:"Firework",artist:"Katy Perry",url:"https://www.youtube.com/watch?v=QGJuMBdaqIw"},
-    {title:"Good Life",artist:"OneRepublic",url:"https://www.youtube.com/watch?v=jZhQOvvV45w"},
-    {title:"On Top of the World",artist:"Imagine Dragons",url:"https://www.youtube.com/watch?v=w5tWYmIOWGk"},
+  newyear: [
+    { title:"Happy New Year Song", artist:"Celebration", url:"https://res.cloudinary.com/dgrttojrj/video/upload/v1781442323/songs/happy_new_year_son.m4a" },
+    { title:"Merry Christmas & Happy New Year", artist:"Slowed", url:"https://res.cloudinary.com/dgrttojrj/video/upload/v1781442323/songs/marry_christmas_and_happ.mp3" },
+    { title:"Merry Christmas & Happy New Year Beat", artist:"Instrumental", url:"https://res.cloudinary.com/dgrttojrj/video/upload/v1781442323/songs/marry_christimas_and_hap.m4a" },
   ],
-  christmas:  [
-    {title:"Perfect Christmas",artist:"S Club 7",url:"https://www.youtube.com/watch?v=lDOHxDsWKto"},
-    {title:"Mistletoe",artist:"Justin Bieber",url:"https://www.youtube.com/watch?v=XMFKVCsBFsU"},
-    {title:"Mary Did You Know",artist:"Pentatonix",url:"https://www.youtube.com/watch?v=ifCWN5pJGIk"},
+  christmas: [
+    { title:"Christmas Bell Rings", artist:"Traditional", url:"https://res.cloudinary.com/dgrttojrj/video/upload/v1781442323/songs/christmas_bell_rings_nvuasn.mp3" },
+    { title:"Christmas Piano", artist:"Instrumental", url:"https://res.cloudinary.com/dgrttojrj/video/upload/v1781442323/songs/christmas_piano_xhxakr.mp3" },
+    { title:"Christmas Emotional Tone", artist:"Instrumental", url:"https://res.cloudinary.com/dgrttojrj/video/upload/v1781442323/songs/christmass_emotional_tone.mp3" },
   ],
-  easter:     [
-    {title:"Amazing Grace",artist:"Instrumental",url:"https://www.youtube.com/watch?v=CDdvReNKKuk"},
-    {title:"You Say",artist:"Lauren Daigle",url:"https://www.youtube.com/watch?v=sIaT8Jl2zpI"},
-    {title:"Oceans",artist:"Hillsong UNITED",url:"https://www.youtube.com/watch?v=dy9nwe9frFc"},
+  easter: [
+    { title:"Yeshua", artist:"Easter Special", url:"https://res.cloudinary.com/dgrttojrj/video/upload/v1781442323/songs/YESHUA_suggested_for_ea.mp3" },
   ],
-  eid:        [
-    {title:"Tala al Badru Alayna",artist:"Traditional",url:"https://www.youtube.com/watch?v=6pCPPgxfxhM"},
-    {title:"Rahman Ya Rahman",artist:"Nasheed",url:"https://www.youtube.com/watch?v=wCDZMzPyPWQ"},
-    {title:"Allah Knows",artist:"Zain Bhikha",url:"https://www.youtube.com/watch?v=PXRGwHBpS_g"},
+  eid: [
+    { title:"Eid Song", artist:"Celebration", url:"https://res.cloudinary.com/dgrttojrj/video/upload/v1781442323/songs/eid_song_dqxcct.mp3" },
+    { title:"Eid Song 2", artist:"Celebration", url:"https://res.cloudinary.com/dgrttojrj/video/upload/v1781442323/songs/eid_song_2_kf5u05.mp3" },
+    { title:"Eid Song 3", artist:"Celebration", url:"https://res.cloudinary.com/dgrttojrj/video/upload/v1781442323/songs/eid_song_3_biogfo.mp3" },
   ],
 };
 
@@ -505,7 +503,21 @@ function WishViewer({code,onBack}){
               <div style={{fontWeight:600,fontSize:".85rem",color:"var(--text)",overflow:"hidden",textOverflow:"ellipsis",whiteSpace:"nowrap"}}>{wish.songTitle}</div>
               <div style={{fontSize:".75rem",color:"var(--muted)"}}>{wish.songArtist}</div>
             </div>
-            {wish.songUrl&&<a href={wish.songUrl} target="_blank" rel="noreferrer" className="song-yt">▶ Play</a>}
+            {wish.songUrl&&(
+              <>
+                <button type="button" className="song-yt" onClick={()=>{
+                  const audio=document.getElementById("hw-viewer-audio");
+                  if(!audio) return;
+                  if(audio.paused || audio.src!==wish.songUrl){
+                    audio.src=wish.songUrl;
+                    audio.play().catch(()=>{});
+                  } else {
+                    audio.pause();
+                  }
+                }}>▶</button>
+                <audio id="hw-viewer-audio" style={{display:"none"}} />
+              </>
+            )}
           </div>
         )}
 
@@ -587,6 +599,7 @@ export default function App(){
   const[msg,setMsg]           =useState("");
   const[event,setEvent]       =useState(null);
   const[customEvent,setCustomEvent]=useState("");
+  const[playing,setPlaying]   =useState(null);
   const[song,setSong]         =useState(null);
   const[gift,setGift]         =useState(null);
   const[pin,setPin]           =useState("");
@@ -808,19 +821,41 @@ export default function App(){
                 </div>
                 <div className="song-list" style={{marginBottom:20,marginTop:14}}>
                   {songs.map((s,i)=>(
-                    <div key={i} className={`song-row step-enter anim-delay-${i+1} ${song?.title===s.title?"active":""}`} onClick={()=>setSong(song?.title===s.title?null:s)}>
+                    <div key={i} className={`song-row step-enter anim-delay-${i+1} ${song?.title===s.title?"active":""}`} onClick={()=>{
+                        const audio=document.getElementById("hw-audio-player");
+                        if(playing===i){
+                          if(audio){audio.pause();}
+                          setPlaying(null);
+                          setSong(null);
+                        } else {
+                          if(audio){audio.src=s.url;audio.play().catch(()=>{});}
+                          setPlaying(i);
+                          setSong(s);
+                        }
+                      }}>
+                      <button type="button" className="song-yt" style={{marginRight:10,flexShrink:0}}>{playing===i?"⏸":"▶"}</button>
                       <div className="song-info">
                         <div className="song-title">{s.title}</div>
                         <div className="song-artist">{s.artist}</div>
                       </div>
-                      <a href={s.url} target="_blank" rel="noreferrer" className="song-yt" onClick={e=>e.stopPropagation()}>▶ Preview</a>
                       {song?.title===s.title&&<div className="song-tick">✓</div>}
                     </div>
                   ))}
                 </div>
+                <audio id="hw-audio-player" style={{display:"none"}} />
                 <div className="nav-row">
-                  <Btn className="btn-ghost" onClick={back}>← Back</Btn>
-                  <Btn className="btn-gold btn-block" onClick={()=>{isSpecial?next():handleCreate();}} disabled={loading}>
+                  <Btn className="btn-ghost" onClick={()=>{
+                    const audio=document.getElementById("hw-audio-player");
+                    if(audio){audio.pause();audio.src="";}
+                    setPlaying(null);
+                    back();
+                  }}>← Back</Btn>
+                  <Btn className="btn-gold btn-block" onClick={()=>{
+                    const audio=document.getElementById("hw-audio-player");
+                    if(audio){audio.pause();audio.src="";}
+                    setPlaying(null);
+                    isSpecial?next():handleCreate();
+                  }} disabled={loading}>
                     {loading?<><div className="spinner"/>Saving…</>:isSpecial?"Continue →":"Create Wish 🌟"}
                   </Btn>
                 </div>
