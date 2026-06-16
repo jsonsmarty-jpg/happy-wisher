@@ -12,35 +12,34 @@ const EVENTS = [
 
 const SONGS = {
   birthday: [
-    { title:"Happy Birthday Song", artist:"Slowed Version", url:"https://res.cloudinary.com/dgrttojrj/video/upload/v1781442323/happybirday_song_slowed_.m4a" },
-    { title:"Happy Birthday Vibe", artist:"Tone Mix", url:"https://res.cloudinary.com/dgrttojrj/video/upload/v1781442323/happybirthday_vibe_tone_q.m4a" },
+    { title:"Happy Birthday Song", artist:"Slowed Version", url:"https://res.cloudinary.com/dgrttojrj/video/upload/v1781442324/happybirday_song_slowed_nmeig6.m4a" },
+    { title:"Happy Birthday Vibe", artist:"Tone Mix", url:"https://res.cloudinary.com/dgrttojrj/video/upload/v1781442323/happybirthday_vibe_tone_qzyuq8.m4a" },
     { title:"Happy Birthday Beat", artist:"Instrumental", url:"https://res.cloudinary.com/dgrttojrj/video/upload/v1781442323/happybirthday_beat_cdgron.mp3" },
   ],
   graduation: [
-    { title:"He Said One Day", artist:"Suggested for Graduation", url:"https://res.cloudinary.com/dgrttojrj/video/upload/v1781442323/he_said_oneday_suggested_.mp3" },
+    { title:"He Said One Day", artist:"Suggested for Graduation", url:"https://res.cloudinary.com/dgrttojrj/video/upload/v1781442324/he_said_oneday_suggested_to_graduation_tg2nky.mp3" },
     { title:"Dreamers", artist:"Graduation Special", url:"https://res.cloudinary.com/dgrttojrj/video/upload/v1781442323/dreamers_zesiqc.m4a" },
     { title:"Congratulations", artist:"Celebration", url:"https://res.cloudinary.com/dgrttojrj/video/upload/v1781442323/congratulations_d5kxum.mp3" },
   ],
   newyear: [
-    { title:"Happy New Year Song", artist:"Celebration", url:"https://res.cloudinary.com/dgrttojrj/video/upload/v1781442323/happy_new_year_son.m4a" },
-    { title:"Merry Christmas & Happy New Year", artist:"Slowed", url:"https://res.cloudinary.com/dgrttojrj/video/upload/v1781442323/marry_christmas_and_happ.mp3" },
-    { title:"Merry Christmas & Happy New Year Beat", artist:"Instrumental", url:"https://res.cloudinary.com/dgrttojrj/video/upload/v1781442323/marry_christimas_and_hap.m4a" },
+    { title:"Happy New Year Song", artist:"Celebration", url:"https://res.cloudinary.com/dgrttojrj/video/upload/v1781442320/happy_new_year_song_qytzsn.m4a" },
+    { title:"Merry Christmas & Happy New Year", artist:"Original", url:"https://res.cloudinary.com/dgrttojrj/video/upload/v1781442325/marry_christmas_and_happy_new_year_rnzuj1.mp3" },
+    { title:"Merry Christmas & Happy New Year Beat", artist:"Instrumental", url:"https://res.cloudinary.com/dgrttojrj/video/upload/v1781442325/marry_christmas_and_happy_new_year_beat_e0scqp.mp3" },
   ],
   christmas: [
     { title:"Christmas Bell Rings", artist:"Traditional", url:"https://res.cloudinary.com/dgrttojrj/video/upload/v1781442323/christmas_bell_rings_nvuasn.mp3" },
     { title:"Christmas Piano", artist:"Instrumental", url:"https://res.cloudinary.com/dgrttojrj/video/upload/v1781442323/christmas_piano_xhxakr.mp3" },
-    { title:"Christmas Emotional Tone", artist:"Instrumental", url:"https://res.cloudinary.com/dgrttojrj/video/upload/v1781442323/christmass_emotional_tone.mp3" },
+    { title:"Christmas Emotional Tone", artist:"Instrumental", url:"https://res.cloudinary.com/dgrttojrj/video/upload/v1781442320/christmass_emotional_tone_qk8v03.mp3" },
   ],
   easter: [
-    { title:"Yeshua", artist:"Easter Special", url:"https://res.cloudinary.com/dgrttojrj/video/upload/v1781442323/YESHUA_suggested_for_ea.mp3" },
-    { title:"Amazing Grace", artist:"Instrumental", url:"https://res.cloudinary.com/dgrttojrj/video/upload/v1781442323/YESHUA_suggested_for_ea.mp3" },
-    { title:"Oceans", artist:"Hillsong", url:"https://res.cloudinary.com/dgrttojrj/video/upload/v1781442323/YESHUA_suggested_for_ea.mp3" },
+    { title:"Yeshua", artist:"Easter Special", url:"https://res.cloudinary.com/dgrttojrj/video/upload/v1781442325/YESHUA_suggested_for_easter_rn8yqw.mp3" },
   ],
   eid: [
     { title:"Eid Song", artist:"Celebration", url:"https://res.cloudinary.com/dgrttojrj/video/upload/v1781442323/eid_song_dqxcct.mp3" },
     { title:"Eid Song 2", artist:"Celebration", url:"https://res.cloudinary.com/dgrttojrj/video/upload/v1781442323/eid_song_2_kf5u05.mp3" },
     { title:"Eid Song 3", artist:"Celebration", url:"https://res.cloudinary.com/dgrttojrj/video/upload/v1781442323/eid_song_3_biogfo.mp3" },
   ],
+  custom: [],
 };
 
 const STEPS_SPECIAL = ["Welcome","Type","Details","Message","Event","Song","Gift","Done"];
@@ -601,8 +600,10 @@ export default function App(){
   const[msg,setMsg]           =useState("");
   const[event,setEvent]       =useState(null);
   const[customEvent,setCustomEvent]=useState("");
+  const[customSong,setCustomSong]=useState(null);
   const[playing,setPlaying]   =useState(null);
   const[song,setSong]         =useState(null);
+  const audioRef              =useRef(new Audio());
   const[gift,setGift]         =useState(null);
   const[pin,setPin]           =useState("");
   const[code,setCode]         =useState("");
@@ -633,7 +634,18 @@ export default function App(){
     return true;
   }
 
-  useEffect(()=>{setSong(null);},[event]);
+  useEffect(()=>{
+    setSong(null);
+    setCustomSong(null);
+    audioRef?.current?.pause();
+    setPlaying(null);
+  },[event]);
+
+  useEffect(()=>{
+    audioRef?.current?.pause();
+    setPlaying(null);
+  },[step]);
+
   function showToast(m,type="success"){setToast({msg:m,type});}
 
   async function handleCreate(){
@@ -648,7 +660,12 @@ export default function App(){
       fd.append("eventLabel",selectedEvent.label);
       fd.append("eventEmoji",selectedEvent.emoji);
       if(isSpecial&&receiver.trim()) fd.append("receiver",receiver.trim());
-      if(song){fd.append("songTitle",song.title);fd.append("songArtist",song.artist);fd.append("songUrl",song.url);}
+      if(song){
+        fd.append("songTitle",customSong?customSong.title:song.title);
+        fd.append("songArtist",customSong?customSong.artist:song.artist);
+        fd.append("songUrl",customSong?"":song.url);
+        if(customSong?.file) fd.append("giftAudio",customSong.file);
+      }
       if(pin.trim()) fd.append("pin",pin.trim());
       if(isSpecial&&gift){
         if(gift.giftMsg?.trim()) fd.append("giftMessage",gift.giftMsg.trim());
@@ -675,8 +692,10 @@ export default function App(){
 
   function reset(){
     setStep(0);setKey(k=>k+1);setWishType(null);setSender("");setReceiver("");
-    setMsg("");setEvent(null);setSong(null);setGift(null);setPin("");setCode("");
+    setMsg("");setEvent(null);setSong(null);setCustomSong(null);setGift(null);setPin("");setCode("");
     setConfetti(false);
+    audioRef.current.pause();
+    setPlaying(null);
     window.history.replaceState({},"",window.location.pathname);
   }
 
@@ -819,53 +838,108 @@ export default function App(){
                 <div className="step-title">Choose a song</div>
                 <div style={{display:"flex",alignItems:"center",gap:8,marginBottom:4}}>
                   <span style={{fontSize:"1.4rem"}}>{ev?.emoji}</span>
-                  <div className="step-sub" style={{margin:0}}>Songs for <strong style={{color:"var(--gold3)"}}>{ev?.label}</strong> — optional</div>
+                  <div className="step-sub" style={{margin:0}}>
+                    Songs for <strong style={{color:"var(--gold3)"}}>{ev?.label||customEvent}</strong> — optional
+                  </div>
                 </div>
-                <div className="song-list" style={{marginBottom:20,marginTop:14}}>
-                  {songs.map((s,i)=>(
-                    <div key={i} className={`song-row step-enter anim-delay-${i+1} ${song?.title===s.title?"active":""}`} onClick={()=>setSong(song?.title===s.title?null:s)}>
-                      <button type="button" className="song-yt" style={{marginRight:10,flexShrink:0}} onClick={e=>{
-                          e.stopPropagation();
-                          const prev=document.getElementById("hw-audio-player");
-                          if(prev){ prev.pause(); }
-                          if(playing===i){
+
+                {/* Custom song upload */}
+                <div className="song-list" style={{marginBottom:20}}>
+                  <input
+                    id="custom-song-upload"
+                    type="file"
+                    accept="audio/*"
+                    style={{display:"none"}}
+                    onChange={e=>{
+                      const f=e.target.files?.[0];
+                      if(!f) return;
+                      const url=URL.createObjectURL(f);
+                      const custom={title:f.name.replace(/\.[^/.]+$/,""),artist:"My Song",url,file:f};
+                      setCustomSong(custom);
+                      setSong(custom);
+                    }}
+                  />
+                  <Btn className="btn-ghost btn-block" onClick={()=>document.getElementById("custom-song-upload")?.click()} style={{marginBottom:12}}>
+                    📎 Upload MP3 / Audio File
+                  </Btn>
+                  {customSong&&(
+                    <div className="song-row step-enter" style={{justifyContent:"space-between",alignItems:"center"}}>
+                      <div style={{display:"flex",alignItems:"center",gap:10,flex:1}}>
+                        <button type="button" className="song-yt" onClick={e=>{
+                          e.preventDefault();e.stopPropagation();
+                          if(audioRef.current.src===customSong.url && !audioRef.current.paused){
+                            audioRef.current.pause();
                             setPlaying(null);
                           } else {
-                            const audio=document.getElementById("hw-audio-player");
-                            if(audio){
-                              audio.src=s.url;
-                              audio.load();
-                              audio.play().then(()=>{
-                                setPlaying(i);
-                              }).catch(err=>{
-                                console.log("Play error:",err);
-                                setPlaying(i);
-                              });
-                            }
-                            setSong(s);
+                            audioRef.current.src=customSong.url;
+                            audioRef.current.play().then(()=>setPlaying("custom")).catch(()=>{});
                           }
                         }}>
-                        {playing===i?"⏸":"▶"}
-                      </button>
-                      <div className="song-info">
-                        <div className="song-title">{s.title}</div>
-                        <div className="song-artist">{s.artist}</div>
+                          {playing==="custom"?"⏸":"▶"}
+                        </button>
+                        <div className="song-info">
+                          <div className="song-title">{customSong.title}</div>
+                          <div className="song-artist">{customSong.artist}</div>
+                        </div>
                       </div>
-                      {song?.title===s.title&&<div className="song-tick">✓</div>}
+                      <div style={{display:"flex",alignItems:"center",gap:12}}>
+                        <div className="song-tick">✓ Selected</div>
+                        <button className="btn btn-ghost btn-sm" type="button" onClick={e=>{
+                          e.stopPropagation();
+                          setCustomSong(null);
+                          setSong(null);
+                          audioRef.current.pause();
+                          setPlaying(null);
+                        }}>
+                          ✕
+                        </button>
+                      </div>
                     </div>
-                  ))}
+                  )}
                 </div>
-                <audio id="hw-audio-player" style={{display:"none"}} preload="none" />
+
+                {/* Preset songs - only show if not custom event */}
+                {songs.length>0&&(
+                  <div className="song-list" style={{marginBottom:20}}>
+                    {songs.map((s,i)=>(
+                      <div key={i} className={`song-row step-enter anim-delay-${i+1} ${song?.title===s.title?"active":""}`} onClick={()=>{
+                        if(customSong){setCustomSong(null);}
+                        setSong(song?.title===s.title?null:s);
+                        audioRef.current.pause();
+                        setPlaying(null);
+                      }}>
+                        <button type="button" className="song-yt" style={{marginRight:10,flexShrink:0}} onClick={e=>{
+                          e.preventDefault();e.stopPropagation();
+                          if(playing===i){
+                            audioRef.current.pause();
+                            setPlaying(null);
+                          } else {
+                            audioRef.current.pause();
+                            audioRef.current.src=s.url;
+                            audioRef.current.load();
+                            audioRef.current.play().then(()=>setPlaying(i)).catch(err=>console.error("Audio:",err));
+                          }
+                        }}>
+                          {playing===i?"⏸":"▶"}
+                        </button>
+                        <div className="song-info">
+                          <div className="song-title">{s.title}</div>
+                          <div className="song-artist">{s.artist}</div>
+                        </div>
+                        {song?.title===s.title&&!customSong&&<div className="song-tick">✓</div>}
+                      </div>
+                    ))}
+                  </div>
+                )}
+
                 <div className="nav-row">
                   <Btn className="btn-ghost" onClick={()=>{
-                    const audio=document.getElementById("hw-audio-player");
-                    if(audio){audio.pause();audio.src="";}
+                    audioRef.current.pause();
                     setPlaying(null);
                     back();
                   }}>← Back</Btn>
                   <Btn className="btn-gold btn-block" onClick={()=>{
-                    const audio=document.getElementById("hw-audio-player");
-                    if(audio){audio.pause();audio.src="";}
+                    audioRef.current.pause();
                     setPlaying(null);
                     isSpecial?next():handleCreate();
                   }} disabled={loading}>
