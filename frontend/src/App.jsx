@@ -661,10 +661,9 @@ export default function App(){
       fd.append("eventEmoji",selectedEvent.emoji);
       if(isSpecial&&receiver.trim()) fd.append("receiver",receiver.trim());
       if(song){
-        fd.append("songTitle",customSong?customSong.title:song.title);
-        fd.append("songArtist",customSong?customSong.artist:song.artist);
-        fd.append("songUrl",customSong?"":song.url);
-        if(customSong?.file) fd.append("giftAudio",customSong.file);
+        fd.append("songTitle", song.title);
+        fd.append("songArtist", song.artist);
+        if(song.url && !song.url.startsWith("blob:")) fd.append("songUrl", song.url);
       }
       if(pin.trim()) fd.append("pin",pin.trim());
       if(isSpecial&&gift){
