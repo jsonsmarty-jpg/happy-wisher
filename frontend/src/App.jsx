@@ -357,6 +357,66 @@ function GiftOpenViewer({gift,onClose}){
   );
 }
 
+function FeedbackModal({onClose,showToast}){
+  const[name,setName]=useState("");
+  const[message,setMessage]=useState("");
+  const[loading,setLoading]=useState(false);
+  const todayStr=new Date().toLocaleDateString("en-GB",{day:"2-digit",month:"long",year:"numeric"});
+
+  async function handleSubmit(){
+    setLoading(true);
+    try{
+      await api.sendFeedback(name.trim(),"Feedback",message.trim());
+      showToast("Thank you for your feedback! 💌");
+      onClose();
+    }catch(err){
+      showToast(err.message||"Something went wrong","error");
+    }finally{setLoading(false);}
+  }
+
+  return(
+    <div className="gm-overlay" onClick={e=>e.target===e.currentTarget&&onClose()}>
+      <div className="gm-card" style={{maxWidth:520}}>
+        <div style={{display:"flex",justifyContent:"space-between",alignItems:"flex-start",marginBottom:20}}>
+          <div>
+            <div style={{fontFamily:"'Cormorant Garamond',serif",fontSize:"1.4rem",fontWeight:700,color:"var(--text)"}}>💬 Send Feedback</div>
+            <div style={{fontSize:".8rem",color:"var(--muted)",marginTop:3}}>We'd love to hear your thoughts</div>
+          </div>
+          <button style={{background:"rgba(184,134,11,.08)",border:"1px solid var(--border)",width:36,height:36,borderRadius:"50%",cursor:"pointer",color:"var(--muted)",fontSize:"1rem",display:"flex",alignItems:"center",justifyContent:"center",flexShrink:0}} onClick={onClose}>✕</button>
+        </div>
+
+        <div className="form-group">
+          <label className="form-label">User</label>
+          <div style={{padding:"14px",border:"1.5px solid var(--border)",borderRadius:14,background:"#FFFEF9",color:"var(--text)",fontSize:"1rem"}}>{name.trim()||"Your name"}</div>
+        </div>
+        <div className="form-group">
+          <label className="form-label">Type</label>
+          <div style={{padding:"14px",border:"1.5px solid var(--border)",borderRadius:14,background:"#FFFEF9",color:"var(--text)",fontSize:"1rem"}}>Feedback</div>
+        </div>
+        <div className="form-group">
+          <label className="form-label">Date</label>
+          <div style={{padding:"14px",border:"1.5px solid var(--border)",borderRadius:14,background:"#FFFEF9",color:"var(--text)",fontSize:"1rem"}}>{todayStr}</div>
+        </div>
+        <div className="form-group">
+          <label className="form-label">Your Name</label>
+          <input className="form-input" value={name} onChange={e=>setName(e.target.value)} maxLength={60}/>
+        </div>
+        <div className="form-group">
+          <label className="form-label">Message</label>
+          <textarea className="form-textarea" style={{minHeight:120}} value={message} onChange={e=>setMessage(e.target.value)} maxLength={500}/>
+          <div className="char-count">{message.length}/500</div>
+        </div>
+        <div style={{display:"flex",gap:10}}>
+          <Btn className="btn-ghost btn-block" onClick={onClose}>Cancel</Btn>
+          <Btn className="btn-gold btn-block" onClick={handleSubmit} disabled={!name.trim()||!message.trim()||loading}>
+            {loading?"Sending…":"Send 💌"}
+          </Btn>
+        </div>
+      </div>
+    </div>
+  );
+}
+
 // ── WISH VIEWER ───────────────────────────────────────────────────────────────
 function WishViewer({code,onBack}){
   const[wish,setWish]=useState(null);
@@ -611,6 +671,7 @@ export default function App(){
   const[giftViewer,setGiftViewer] =useState(false);
   const[confetti,setConfetti] =useState(false);
   const[toast,setToast]       =useState(null);
+  const[feedbackOpen,setFeedbackOpen]=useState(false);
   const[copied,setCopied]     =useState(false);
   const[loading,setLoading]   =useState(false);
 
@@ -705,7 +766,13 @@ export default function App(){
         <style>{CSS}</style>
         <StarCanvas/><div className="grain"/>
         <div className="orb orb1"/><div className="orb orb2"/><div className="orb orb3"/>
-        <div className="topbar"><span className="logo-text">Happy Wisher</span></div>
+        <div className="topbar">
+          <span className="logo-text">Happy Wisher</span>
+          <button onClick={()=>setFeedbackOpen(true)}
+            style={{position:"absolute",right:0,top:"50%",transform:"translateY(-50%)",background:"rgba(184,134,11,.08)",border:"1px solid var(--border)",borderRadius:50,padding:"7px 14px",cursor:"pointer",color:"var(--gold3)",fontSize:".75rem",fontWeight:600,display:"flex",alignItems:"center",gap:5,fontFamily:"'Outfit',sans-serif"}}>
+            💬 Feedback
+          </button>
+        </div>
         <WishViewer code={viewCode} onBack={()=>{setPage("home");setViewCode("");window.history.replaceState({},"",window.location.pathname);}}/>
         <div style={{marginTop:24,textAlign:"center",fontSize:".7rem",color:"var(--muted)",letterSpacing:".04em"}}>
           powered by <span style={{color:"var(--gold3)",fontWeight:600}}>HYPER Company</span>
@@ -719,7 +786,13 @@ export default function App(){
       <style>{CSS}</style>
       <StarCanvas/><div className="grain"/>
       <div className="orb orb1"/><div className="orb orb2"/><div className="orb orb3"/>
-      <div className="topbar"><span className="logo-text">Happy Wisher</span></div>
+      <div className="topbar">
+        <span className="logo-text">Happy Wisher</span>
+        <button onClick={()=>setFeedbackOpen(true)}
+          style={{position:"absolute",right:0,top:"50%",transform:"translateY(-50%)",background:"rgba(184,134,11,.08)",border:"1px solid var(--border)",borderRadius:50,padding:"7px 14px",cursor:"pointer",color:"var(--gold3)",fontSize:".75rem",fontWeight:600,display:"flex",alignItems:"center",gap:5,fontFamily:"'Outfit',sans-serif"}}>
+          💬 Feedback
+        </button>
+      </div>
       <div className="card">
         {step>0&&stepName!=="Done"&&(
           <div className="progress-wrap">
@@ -1030,6 +1103,7 @@ export default function App(){
       <div style={{marginTop:24,textAlign:"center",fontSize:".7rem",color:"var(--muted)",animation:"fadeDown .8s .4s both",letterSpacing:".04em"}}>
         powered by <span style={{color:"var(--gold3)",fontWeight:600}}>HYPER Company</span>
       </div>
+      {feedbackOpen&&<FeedbackModal onClose={()=>setFeedbackOpen(false)} showToast={showToast}/>}
       {giftModal&&<GiftModal initial={gift} onClose={()=>setGiftModal(false)} onSave={g=>{setGift(g);showToast("Gift saved! 🎁");}}/>}
       {giftViewer&&gift&&<GiftOpenViewer gift={gift} onClose={()=>setGiftViewer(false)}/>}
       {toast&&<Toast msg={toast.msg} type={toast.type} onDone={()=>setToast(null)}/>}

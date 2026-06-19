@@ -16,6 +16,7 @@ export const api = {
   createWish:  (formData)       => request("POST",   "/api/wishes", formData, true),
   getWish:     (code)           => request("GET",    `/api/wishes/${code}`),
   verifyPin:   (code, pin)      => request("POST",   `/api/wishes/${code}/verify-pin`, { pin }),
+  sendFeedback: (name, type, message) => request("POST", "/api/feedback", { name, type, message }),
   listWishes:  (page = 1)       => request("GET",    `/api/wishes?page=${page}&limit=12`),
   deleteWish:  (code)           => request("DELETE", `/api/wishes/${code}`),
   reactToWish: (code, emoji)    => request("POST",   `/api/wishes/${code}/react`, { emoji }),
