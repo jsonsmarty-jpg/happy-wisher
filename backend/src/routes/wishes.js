@@ -253,4 +253,22 @@ router.delete("/:code", async (req, res, next) => {
   } catch (err) { next(err); }
 });
 
+// GET /api/wishes/tier/:sender
+router.get("/tier/:sender", async (req, res, next) => {
+  try {
+    const sender = req.params.sender.trim();
+    const topWish = await prisma.wish.findFirst({
+      where: { sender: { equals: sender, mode: "insensitive" } },
+      orderBy: { views: "desc" },
+      select: { views: true },
+    });
+    const views = topWish?.views || 0;
+    let tier = "basic";
+    if (views >= 56) tier = "coolest";
+    else if (views >= 46) tier = "cooler";
+    else if (views >= 31) tier = "cool";
+    res.json({ tier, views });
+  } catch (err) { next(err); }
+});
+
 module.exports = router;

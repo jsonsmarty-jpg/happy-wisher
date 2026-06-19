@@ -223,6 +223,24 @@ body{font-family:'Outfit',sans-serif;background:var(--bg);color:var(--text);min-
 .viewer-code-label{font-size:.68rem;color:rgba(255,253,247,.45);letter-spacing:.12em;text-transform:uppercase;margin-bottom:6px}
 .viewer-code-val{font-family:'Cormorant Garamond',serif;font-size:clamp(1.1rem,4vw,1.4rem);font-weight:700;letter-spacing:.15em;background:linear-gradient(90deg,#DAA520,#F5DEB3,#DAA520);background-size:200%;-webkit-background-clip:text;-webkit-text-fill-color:transparent;animation:cShimmer 2.5s linear infinite;}
 .viewer-loading{text-align:center;padding:60px 20px}
+.tpl-loading{display:flex;flex-direction:column;align-items:center;justify-content:center;padding:60px 20px;}
+.tpl-basic .tpl-spinner{width:48px;height:48px;border:3px solid rgba(184,134,11,.15);border-top-color:var(--gold2);border-radius:50%;animation:spin .9s linear infinite;margin-bottom:18px;}
+.tpl-cool .tpl-spinner{width:56px;height:56px;border-radius:50%;background:conic-gradient(var(--gold2),var(--gold3),transparent);animation:spin 1.2s linear infinite;margin-bottom:18px;position:relative;}
+.tpl-cool .tpl-spinner::before{content:'';position:absolute;inset:6px;background:var(--bg);border-radius:50%;}
+.tpl-cooler .tpl-orbit{position:relative;width:64px;height:64px;margin-bottom:18px;}
+.tpl-cooler .tpl-orbit span{position:absolute;width:10px;height:10px;border-radius:50%;background:var(--gold2);top:50%;left:50%;transform-origin:0 0;animation:orbitSpin 1.4s linear infinite;}
+.tpl-cooler .tpl-orbit span:nth-child(1){animation-delay:0s}
+.tpl-cooler .tpl-orbit span:nth-child(2){animation-delay:.35s}
+.tpl-cooler .tpl-orbit span:nth-child(3){animation-delay:.7s}
+.tpl-cooler .tpl-orbit span:nth-child(4){animation-delay:1.05s}
+@keyframes orbitSpin{from{transform:rotate(0deg) translate(28px) rotate(0deg)}to{transform:rotate(360deg) translate(28px) rotate(-360deg)}}
+.tpl-coolest .tpl-rings{position:relative;width:70px;height:70px;margin-bottom:18px;}
+.tpl-coolest .tpl-rings span{position:absolute;inset:0;border-radius:50%;border:3px solid transparent;border-top-color:var(--gold2);animation:ringSpin 1.5s linear infinite;}
+.tpl-coolest .tpl-rings span:nth-child(2){inset:8px;border-top-color:var(--gold3);animation-duration:1.1s;animation-direction:reverse;}
+.tpl-coolest .tpl-rings span:nth-child(3){inset:16px;border-top-color:#F5DEB3;animation-duration:.8s;}
+@keyframes ringSpin{to{transform:rotate(360deg)}}
+.tpl-loading-text{font-size:.88rem;color:var(--muted);animation:blink 1.5s ease-in-out infinite;}
+.tpl-badge{display:inline-flex;align-items:center;gap:5px;background:rgba(184,134,11,.1);border:1px solid var(--border2);border-radius:50px;padding:4px 12px;font-size:.7rem;font-weight:700;color:var(--gold3);margin-top:10px;letter-spacing:.05em;text-transform:uppercase;}
 .viewer-not-found{text-align:center;padding:40px 20px}
 .pin-overlay{position:fixed;inset:0;z-index:500;background:rgba(44,24,16,.95);backdrop-filter:blur(10px);display:flex;align-items:center;justify-content:center;padding:20px;animation:fadeIn .3s ease;}
 .pin-card{background:#FFFDF7;border:1.5px solid var(--border2);border-radius:24px;padding:36px 28px;width:100%;max-width:360px;text-align:center;animation:stepIn .4s cubic-bezier(.4,0,.2,1);}
@@ -417,10 +435,30 @@ function FeedbackModal({onClose,showToast}){
   );
 }
 
+function LoadingTemplate({tier}){
+  const title = tier === "coolest" ? "Coolest Tier" : tier === "cooler" ? "Cooler Tier" : tier === "cool" ? "Cool Tier" : "Basic Tier";
+  return (
+    <div className={`tpl-loading tpl-${tier || "basic"}`}>
+      {tier === "coolest" ? (
+        <div className="tpl-rings"><span/><span/><span/></div>
+      ) : tier === "cooler" ? (
+        <div className="tpl-orbit"><span/><span/><span/><span/></div>
+      ) : (
+        <div className="tpl-spinner" />
+      )}
+      <div style={{fontSize:"1.25rem",fontWeight:700,color:"var(--text)",marginBottom:10}}>{title} unlocked</div>
+      <div className="tpl-loading-text">Unlocking the sender's tier…</div>
+      <div className="tpl-badge">Tier: {title}</div>
+    </div>
+  );
+}
+
 // ── WISH VIEWER ───────────────────────────────────────────────────────────────
 function WishViewer({code,onBack}){
   const[wish,setWish]=useState(null);
   const[loading,setLoading]=useState(true);
+  const[senderTier,setSenderTier]=useState(null);
+  const[tierReveal,setTierReveal]=useState(false);
   const[notFound,setNotFound]=useState(false);
   const[expired,setExpired]=useState(false);
   const[hasPIN,setHasPIN]=useState(false);
@@ -437,21 +475,41 @@ function WishViewer({code,onBack}){
   const[replyLoading,setReplyLoading]=useState(false);
 
   useEffect(()=>{
+    let active=true;
     setLoading(true);
+    setSenderTier(null);
+    setTierReveal(false);
     api.getWish(code)
-      .then(({wish,hasPIN})=>{
+      .then(async ({wish,hasPIN})=>{
+        if(!active) return;
         if(hasPIN){setHasPIN(true);setLoading(false);return;}
         setWish(wish);
         setReactions(wish.reactions||[]);
         setReplies(wish.replies||[]);
-        setLoading(false);
-        setTimeout(()=>setConfetti(true),600);
+        try{
+          const {tier} = await api.getTier(wish.sender);
+          if(!active) return;
+          setSenderTier(tier||"basic");
+        }catch{
+          if(!active) return;
+          setSenderTier("basic");
+        }
+        if(!active) return;
+        setTierReveal(true);
+        setTimeout(()=>{
+          if(!active) return;
+          setTierReveal(false);
+          setLoading(false);
+          setTimeout(()=>setConfetti(true),600);
+        },1200);
       })
       .catch(err=>{
+        if(!active) return;
         if(err.message?.includes("expired")) setExpired(true);
         else setNotFound(true);
         setLoading(false);
       });
+    return()=>{active=false;};
   },[code]);
 
   async function handleVerifyPin(){
@@ -490,11 +548,13 @@ function WishViewer({code,onBack}){
 
   if(loading)return(
     <div className="viewer-page">
-      <div className="viewer-loading">
-        <div style={{fontSize:"2.5rem",marginBottom:16,animation:"floatEmoji 2s ease-in-out infinite"}}>✨</div>
-        <div style={{color:"var(--muted)",fontSize:".9rem"}}>Opening your wish…</div>
-        <div className="spinner" style={{margin:"16px auto 0"}}/>
-      </div>
+      {tierReveal && senderTier ? <LoadingTemplate tier={senderTier} /> : (
+        <div className="viewer-loading">
+          <div style={{fontSize:"2.5rem",marginBottom:16,animation:"floatEmoji 2s ease-in-out infinite"}}>✨</div>
+          <div style={{color:"var(--muted)",fontSize:".9rem"}}>Opening your wish…</div>
+          <div className="spinner" style={{margin:"16px auto 0"}}/>
+        </div>
+      )}
     </div>
   );
 
