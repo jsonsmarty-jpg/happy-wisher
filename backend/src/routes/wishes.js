@@ -271,4 +271,16 @@ router.get("/tier/:sender", async (req, res, next) => {
   } catch (err) { next(err); }
 });
 
+// GET /api/wishes/templates-info
+router.get("/templates-info", async (req, res) => {
+  res.json({
+    templates: [
+      { tier:"basic",   label:"Basic Template",   emoji:"✨", minViews:20, maxViews:30, desc:"Unlocked once your wish is opened by 20-30 people" },
+      { tier:"cool",    label:"Cool Template",     emoji:"🌀", minViews:31, maxViews:45, desc:"Unlocked once your wish is opened by 31-45 people" },
+      { tier:"cooler",  label:"Cooler Template",   emoji:"🪐", minViews:46, maxViews:55, desc:"Unlocked once your wish is opened by 46-55 people" },
+      { tier:"coolest", label:"Coolest Template",  emoji:"💫", minViews:56, maxViews:null, desc:"Unlocked once your wish is opened by 56+ people" },
+    ],
+  });
+});
+
 module.exports = router;

@@ -241,6 +241,26 @@ body{font-family:'Outfit',sans-serif;background:var(--bg);color:var(--text);min-
 @keyframes ringSpin{to{transform:rotate(360deg)}}
 .tpl-loading-text{font-size:.88rem;color:var(--muted);animation:blink 1.5s ease-in-out infinite;}
 .tpl-badge{display:inline-flex;align-items:center;gap:5px;background:rgba(184,134,11,.1);border:1px solid var(--border2);border-radius:50px;padding:4px 12px;font-size:.7rem;font-weight:700;color:var(--gold3);margin-top:10px;letter-spacing:.05em;text-transform:uppercase;}
+.tpl-launcher-wrap{position:absolute;right:0;top:50%;transform:translateY(-50%);}
+.tpl-launcher{background:linear-gradient(135deg,var(--gold3),var(--gold2));border:none;border-radius:50px;padding:9px 16px;cursor:pointer;color:#fff;font-size:.75rem;font-weight:700;font-family:'Outfit',sans-serif;display:flex;align-items:center;gap:6px;box-shadow:0 4px 16px rgba(184,134,11,.35);animation:tplShake 2.8s ease-in-out infinite;}
+@keyframes tplShake{
+  0%,100%{transform:rotate(0deg) translateY(0)}
+  4%{transform:rotate(-8deg) translateY(-1px)}
+  8%{transform:rotate(8deg) translateY(0)}
+  12%{transform:rotate(-6deg)}
+  16%{transform:rotate(6deg)}
+  20%{transform:rotate(-3deg)}
+  24%{transform:rotate(0deg)}
+  60%{transform:rotate(0deg)}
+}
+.tpl-modal-card{background:#FFFDF7;border:1.5px solid var(--border2);border-radius:24px;padding:28px 24px;width:100%;max-width:480px;max-height:85vh;overflow-y:auto;animation:stepIn .4s cubic-bezier(.4,0,.2,1);}
+.tpl-card-item{border:1.5px solid var(--border);border-radius:16px;padding:16px;margin-bottom:12px;display:flex;gap:14px;align-items:flex-start;background:#FFFEF9;transition:all .25s;}
+.tpl-card-item.unlocked{border-color:var(--gold2);background:rgba(184,134,11,.06);}
+.tpl-card-emoji{font-size:1.8rem;flex-shrink:0;width:44px;height:44px;display:flex;align-items:center;justify-content:center;background:rgba(184,134,11,.08);border-radius:12px;}
+.tpl-card-title{font-weight:700;font-size:.92rem;color:var(--text);margin-bottom:3px;display:flex;align-items:center;gap:8px;}
+.tpl-card-desc{font-size:.78rem;color:var(--muted);line-height:1.5;}
+.tpl-lock-tag{font-size:.65rem;font-weight:700;background:rgba(184,134,11,.12);color:var(--gold3);border-radius:50px;padding:2px 8px;letter-spacing:.04em;text-transform:uppercase;}
+.tpl-unlocked-tag{font-size:.65rem;font-weight:700;background:#27AE60;color:#fff;border-radius:50px;padding:2px 8px;letter-spacing:.04em;text-transform:uppercase;}
 .viewer-not-found{text-align:center;padding:40px 20px}
 .pin-overlay{position:fixed;inset:0;z-index:500;background:rgba(44,24,16,.95);backdrop-filter:blur(10px);display:flex;align-items:center;justify-content:center;padding:20px;animation:fadeIn .3s ease;}
 .pin-card{background:#FFFDF7;border:1.5px solid var(--border2);border-radius:24px;padding:36px 28px;width:100%;max-width:360px;text-align:center;animation:stepIn .4s cubic-bezier(.4,0,.2,1);}
@@ -430,6 +450,70 @@ function FeedbackModal({onClose,showToast}){
             {loading?"Sending…":"Send 💌"}
           </Btn>
         </div>
+      </div>
+    </div>
+  );
+}
+
+function TemplatesModal({onClose,sender}){
+  const[templates,setTemplates]=useState([]);
+  const[myTier,setMyTier]=useState("none");
+  const[myViews,setMyViews]=useState(0);
+  const[loadingInfo,setLoadingInfo]=useState(true);
+
+  useEffect(()=>{
+    setLoadingInfo(true);
+    Promise.all([
+      api.getTemplatesInfo(),
+      sender?.trim()?api.getTier(sender.trim()):Promise.resolve({tier:"none",views:0}),
+    ]).then(([infoRes,tierRes])=>{
+      setTemplates(infoRes.templates);
+      setMyTier(tierRes.tier||"none");
+      setMyViews(tierRes.views||0);
+      setLoadingInfo(false);
+    }).catch(()=>setLoadingInfo(false));
+  },[sender]);
+
+  const tierOrder=["none","basic","cool","cooler","coolest"];
+  function isUnlocked(tier){
+    return tierOrder.indexOf(myTier)>=tierOrder.indexOf(tier);
+  }
+
+  return(
+    <div className="gm-overlay" onClick={e=>e.target===e.currentTarget&&onClose()}>
+      <div className="tpl-modal-card">
+        <div style={{display:"flex",justifyContent:"space-between",alignItems:"flex-start",marginBottom:18}}>
+          <div>
+            <div style={{fontFamily:"'Cormorant Garamond',serif",fontSize:"1.4rem",fontWeight:700,color:"var(--text)"}}>🎨 Wish Templates</div>
+            <div style={{fontSize: ".85rem",color:"var(--muted)",marginTop:4}}>Unlock fancier effects by getting your wishes opened more</div>
+          </div>
+          <button style={{background:"rgba(184,134,11,.08)",border:"1px solid var(--border)",width:36,height:36,borderRadius:"50%",cursor:"pointer",color:"var(--muted)",fontSize:"1rem",display:"flex",alignItems:"center",justifyContent:"center",flexShrink:0}} onClick={onClose}>✕</button>
+        </div>
+
+        {loadingInfo?(
+          <div style={{textAlign:"center",padding:"40px 0",color:"var(--muted)"}}>Loading templates…</div>
+        ):(
+          <>
+            <div style={{fontSize:".82rem",color:"var(--muted)",marginBottom:16}}>
+              👁 Your most-viewed wish so far: <strong>{myViews}</strong> views
+            </div>
+            {templates.map(t=>(
+              <div key={t.tier} className={`tpl-card-item ${isUnlocked(t.tier)?"unlocked":""}`}>
+                <div className="tpl-card-emoji">{t.emoji}</div>
+                <div style={{flex:1}}>
+                  <div className="tpl-card-title">
+                    {t.label}
+                    {isUnlocked(t.tier)?<span className="tpl-unlocked-tag">Unlocked</span>:<span className="tpl-lock-tag">Locked</span>}
+                  </div>
+                  <div className="tpl-card-desc">{t.desc}</div>
+                </div>
+              </div>
+            ))}
+            <div style={{fontSize:".78rem",color:"var(--muted)",marginTop:12}}>
+              💡 Share your wish link with more people — every time someone opens it, your view count grows!
+            </div>
+          </>
+        )}
       </div>
     </div>
   );
@@ -729,6 +813,7 @@ export default function App(){
   const[code,setCode]         =useState("");
   const[giftModal,setGiftModal]   =useState(false);
   const[giftViewer,setGiftViewer] =useState(false);
+  const[templatesModalOpen,setTemplatesModalOpen]=useState(false);
   const[confetti,setConfetti] =useState(false);
   const[toast,setToast]       =useState(null);
   const[feedbackOpen,setFeedbackOpen]=useState(false);
@@ -968,10 +1053,15 @@ export default function App(){
             {stepName==="Song"&&(
               <>
                 <div className="step-title">Choose a song</div>
-                <div style={{display:"flex",alignItems:"center",gap:8,marginBottom:4}}>
+                <div style={{display:"flex",alignItems:"center",gap:8,marginBottom:4,position:"relative"}}>
                   <span style={{fontSize:"1.4rem"}}>{ev?.emoji}</span>
                   <div className="step-sub" style={{margin:0}}>
                     Songs for <strong style={{color:"var(--gold3)"}}>{ev?.label||customEvent}</strong> — optional
+                  </div>
+                  <div className="tpl-launcher-wrap">
+                    <button type="button" className="tpl-launcher" onClick={()=>setTemplatesModalOpen(true)}>
+                      🎨 Templates
+                    </button>
                   </div>
                 </div>
 
@@ -1165,6 +1255,7 @@ export default function App(){
       </div>
       {feedbackOpen&&<FeedbackModal onClose={()=>setFeedbackOpen(false)} showToast={showToast}/>}
       {giftModal&&<GiftModal initial={gift} onClose={()=>setGiftModal(false)} onSave={g=>{setGift(g);showToast("Gift saved! 🎁");}}/>}
+      {templatesModalOpen&&<TemplatesModal sender={sender} onClose={()=>setTemplatesModalOpen(false)}/>}
       {giftViewer&&gift&&<GiftOpenViewer gift={gift} onClose={()=>setGiftViewer(false)}/>}
       {toast&&<Toast msg={toast.msg} type={toast.type} onDone={()=>setToast(null)}/>}
       <Confetti active={confetti}/>
