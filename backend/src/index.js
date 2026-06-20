@@ -37,6 +37,7 @@ app.use(express.urlencoded({ extended: true, limit: "2mb" }));
 app.use("/api", rateLimit({ windowMs: 15*60*1000, max: 100, standardHeaders: true, legacyHeaders: false }));
 app.use("/api/wishes", rateLimit({ windowMs: 60*60*1000, max: 20 }), wishesRouter);
 app.use("/api/feedback", require("./routes/feedback"));
+app.use("/api/admin", require("./routes/admin"));
 
 app.get("/health", (req, res) => res.json({ status: "ok", timestamp: new Date().toISOString() }));
 

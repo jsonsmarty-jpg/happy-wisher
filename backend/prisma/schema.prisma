@@ -9,6 +9,7 @@ datasource db {
 
 model Wish {
   id          String     @id @default(cuid())
+  country     String?
   code        String     @unique
   type        String
   sender      String

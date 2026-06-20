@@ -28,6 +28,7 @@ router.post("/", upload.fields([
 ]), async (req, res, next) => {
   let mediaPublicId = null;
   let audioPublicId = null;
+  const country = req.headers["cf-ipcountry"] || req.headers["x-vercel-ip-country"] || "Unknown";
   try {
     const {
       type, sender, receiver, message, event,
@@ -90,7 +91,7 @@ router.post("/", upload.fields([
 
     const wish = await prisma.wish.create({
       data: {
-        code, type,
+        code, type, country,
         sender:     sender.trim(),
         receiver:   receiver?.trim()   || null,
         message:    message.trim(),
