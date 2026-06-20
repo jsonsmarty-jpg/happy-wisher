@@ -18,6 +18,7 @@ app.use(morgan("combined"));
 const allowedOrigins = [
   process.env.FRONTEND_URL,
   "https://happy-wisher-alll.onrender.com",
+  "https://happy-wisher-admin.onrender.com",
   "http://localhost:5173",
   "http://localhost:3000",
 ].filter(Boolean);
