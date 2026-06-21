@@ -55,6 +55,54 @@ function requireAdmin(req, res, next) {
   next();
 }
 
+// POST /api/admin/change-password (requires being logged in)
+router.post("/change-password", requireAdmin, async (req, res, next) => {
+  try {
+    const { currentPassword, newPassword, confirmNewPassword } = req.body;
+    const admin = await prisma.adminAuth.findFirst();
+    if (!admin) return res.status(400).json({ error: "Admin not configured yet." });
+
+    const valid = await bcrypt.compare(currentPassword || "", admin.passwordHash);
+    if (!valid) return res.status(401).json({ error: "Current password is incorrect." });
+
+    if (!newPassword || newPassword.length < 6) {
+      return res.status(400).json({ error: "New password must be at least 6 characters." });
+    }
+    if (newPassword !== confirmNewPassword) {
+      return res.status(400).json({ error: "New passwords do not match." });
+    }
+
+    const passwordHash = await bcrypt.hash(newPassword, 10);
+    await prisma.adminAuth.update({ where: { id: admin.id }, data: { passwordHash } });
+    res.json({ success: true });
+  } catch (err) { next(err); }
+});
+
+// POST /api/admin/reset-password (emergency recovery using ADMIN_KEY as master override)
+router.post("/reset-password", async (req, res, next) => {
+  try {
+    const { masterKey, newPassword, confirmNewPassword } = req.body;
+    if (masterKey !== process.env.ADMIN_KEY) {
+      return res.status(401).json({ error: "Invalid master key." });
+    }
+    if (!newPassword || newPassword.length < 6) {
+      return res.status(400).json({ error: "New password must be at least 6 characters." });
+    }
+    if (newPassword !== confirmNewPassword) {
+      return res.status(400).json({ error: "New passwords do not match." });
+    }
+
+    const passwordHash = await bcrypt.hash(newPassword, 10);
+    const admin = await prisma.adminAuth.findFirst();
+    if (admin) {
+      await prisma.adminAuth.update({ where: { id: admin.id }, data: { passwordHash } });
+    } else {
+      await prisma.adminAuth.create({ data: { passwordHash } });
+    }
+    res.json({ success: true });
+  } catch (err) { next(err); }
+});
+
 // GET /api/admin/stats
 router.get("/stats", requireAdmin, async (req, res, next) => {
   try {

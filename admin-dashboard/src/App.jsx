@@ -97,6 +97,7 @@ function LoginScreen({ onLogin }) {
   const [password, setPassword] = useState("");
   const [err, setErr] = useState("");
   const [loading, setLoading] = useState(false);
+  const [showReset, setShowReset] = useState(false);
 
   async function handleLogin() {
     setErr("");
@@ -111,28 +112,215 @@ function LoginScreen({ onLogin }) {
     }
   }
 
+  if (showReset) return <ResetPasswordScreen onBack={() => setShowReset(false)} />;
+
   return (
     <div className="admin-card">
-      <h1 className="admin-title">🔒 Admin Login</h1>
-      <p className="admin-sub">Enter your password to access the Happy Wisher dashboard.</p>
+      <div className="admin-title">🔒 Admin Login</div>
+      <div className="admin-sub">Enter your password to access the Happy Wisher dashboard.</div>
       {err && <div className="admin-err">{err}</div>}
       <input
-        type="password"
         className="admin-input"
+        type="password"
         placeholder="Password"
         value={password}
         onChange={(e) => setPassword(e.target.value)}
         onKeyDown={(e) => e.key === "Enter" && handleLogin()}
       />
-      <button className="admin-btn" onClick={handleLogin} disabled={loading}>
+      <button className="admin-btn" onClick={handleLogin} disabled={loading || !password}>
         {loading ? "Checking…" : "Login"}
       </button>
+      <button className="logout-btn" style={{ width: "100%", marginTop: 10 }} onClick={() => setShowReset(true)}>
+        Forgot password?
+      </button>
+    </div>
+  );
+}
+
+function ResetPasswordScreen({ onBack }) {
+  const [masterKey, setMasterKey] = useState("");
+  const [newPassword, setNewPassword] = useState("");
+  const [confirm, setConfirm] = useState("");
+  const [err, setErr] = useState("");
+  const [success, setSuccess] = useState(false);
+  const [loading, setLoading] = useState(false);
+
+  async function handleReset() {
+    setErr("");
+    setLoading(true);
+    try {
+      await api.resetPassword(masterKey, newPassword, confirm);
+      setSuccess(true);
+    } catch (e) {
+      setErr(e.message);
+    } finally {
+      setLoading(false);
+    }
+  }
+
+  return (
+    <div className="admin-card">
+      <div className="admin-title">🆘 Reset Password</div>
+      <div className="admin-sub">This requires your secret ADMIN_KEY (set in your backend's environment variables on Render).</div>
+      {err && <div className="admin-err">{err}</div>}
+      {success ? (
+        <>
+          <div style={{ color: "#27AE60", fontSize: ".85rem", marginBottom: 14 }}>✓ Password reset! You can now log in.</div>
+          <button className="admin-btn" onClick={onBack}>Back to Login</button>
+        </>
+      ) : (
+        <>
+          <input
+            className="admin-input"
+            type="password"
+            placeholder="ADMIN_KEY (master key)"
+            value={masterKey}
+            onChange={(e) => setMasterKey(e.target.value)}
+          />
+          <input
+            className="admin-input"
+            type="password"
+            placeholder="New password (min 6 chars)"
+            value={newPassword}
+            onChange={(e) => setNewPassword(e.target.value)}
+          />
+          <input
+            className="admin-input"
+            type="password"
+            placeholder="Confirm new password"
+            value={confirm}
+            onChange={(e) => setConfirm(e.target.value)}
+          />
+          <button
+            className="admin-btn"
+            onClick={handleReset}
+            disabled={loading || !masterKey || newPassword.length < 6 || !confirm}
+          >
+            {loading ? "Resetting…" : "Reset Password"}
+          </button>
+          <button className="logout-btn" style={{ width: "100%", marginTop: 10 }} onClick={onBack}>
+            Back to Login
+          </button>
+        </>
+      )}
+    </div>
+  );
+}
+
+function ChangePasswordModal({ token, onClose }) {
+  const [currentPassword, setCurrentPassword] = useState("");
+  const [newPassword, setNewPassword] = useState("");
+  const [confirm, setConfirm] = useState("");
+  const [err, setErr] = useState("");
+  const [success, setSuccess] = useState(false);
+  const [loading, setLoading] = useState(false);
+
+  async function handleSubmit() {
+    setErr("");
+    setLoading(true);
+    try {
+      await api.changePassword(currentPassword, newPassword, confirm, token);
+      setSuccess(true);
+      setTimeout(onClose, 1500);
+    } catch (e) {
+      setErr(e.message);
+    } finally {
+      setLoading(false);
+    }
+  }
+
+  return (
+    <div style={{ position: "fixed", inset: 0, background: "rgba(44,24,16,.5)", display: "flex", alignItems: "center", justifyContent: "center", padding: 20, zIndex: 200 }} onClick={(e) => e.target === e.currentTarget && onClose()}>
+      <div className="admin-card">
+        <div className="admin-title">🔑 Change Password</div>
+        <div className="admin-sub">Enter your current password and choose a new one.</div>
+        {err && <div className="admin-err">{err}</div>}
+        {success && <div style={{ color: "#27AE60", fontSize: ".85rem", marginBottom: 10 }}>✓ Password changed successfully!</div>}
+        <input className="admin-input" type="password" placeholder="Current password" value={currentPassword} onChange={(e) => setCurrentPassword(e.target.value)} />
+        <input className="admin-input" type="password" placeholder="New password (min 6 chars)" value={newPassword} onChange={(e) => setNewPassword(e.target.value)} />
+        <input className="admin-input" type="password" placeholder="Confirm new password" value={confirm} onChange={(e) => setConfirm(e.target.value)} />
+        <button className="admin-btn" onClick={handleSubmit} disabled={loading || !currentPassword || newPassword.length < 6 || !confirm}>
+          {loading ? "Updating…" : "Update Password"}
+        </button>
+        <button className="logout-btn" style={{ width: "100%", marginTop: 10 }} onClick={onClose}>Cancel</button>
+      </div>
+    </div>
+  );
+}
+
+function Dashboard({ token, onLogout }) {
+  const [masterKey, setMasterKey] = useState("");
+  const [newPassword, setNewPassword] = useState("");
+  const [confirm, setConfirm] = useState("");
+  const [err, setErr] = useState("");
+  const [success, setSuccess] = useState(false);
+  const [loading, setLoading] = useState(false);
+
+  async function handleReset() {
+    setErr("");
+    setLoading(true);
+    try {
+      await api.resetPassword(masterKey, newPassword, confirm);
+      setSuccess(true);
+    } catch (e) {
+      setErr(e.message);
+    } finally {
+      setLoading(false);
+    }
+  }
+
+  return (
+    <div className="admin-card">
+      <div className="admin-title">🆘 Reset Password</div>
+      <div className="admin-sub">This requires your secret ADMIN_KEY (set in your backend's environment variables on Render).</div>
+      {err && <div className="admin-err">{err}</div>}
+      {success ? (
+        <>
+          <div style={{ color: "#27AE60", fontSize: ".85rem", marginBottom: 14 }}>✓ Password reset! You can now log in.</div>
+          <button className="admin-btn" onClick={onBack}>Back to Login</button>
+        </>
+      ) : (
+        <>
+          <input
+            className="admin-input"
+            type="password"
+            placeholder="ADMIN_KEY (master key)"
+            value={masterKey}
+            onChange={(e) => setMasterKey(e.target.value)}
+          />
+          <input
+            className="admin-input"
+            type="password"
+            placeholder="New password (min 6 chars)"
+            value={newPassword}
+            onChange={(e) => setNewPassword(e.target.value)}
+          />
+          <input
+            className="admin-input"
+            type="password"
+            placeholder="Confirm new password"
+            value={confirm}
+            onChange={(e) => setConfirm(e.target.value)}
+          />
+          <button
+            className="admin-btn"
+            onClick={handleReset}
+            disabled={loading || !masterKey || newPassword.length < 6 || !confirm}
+          >
+            {loading ? "Resetting…" : "Reset Password"}
+          </button>
+          <button className="logout-btn" style={{ width: "100%", marginTop: 10 }} onClick={onBack}>
+            Back to Login
+          </button>
+        </>
+      )}
     </div>
   );
 }
 
 function Dashboard({ token, onLogout }) {
   const [tab, setTab] = useState("stats");
+  const [showChangePw, setShowChangePw] = useState(false);
   const [stats, setStats] = useState(null);
   const [media, setMedia] = useState([]);
   const [feedback, setFeedback] = useState([]);
@@ -192,6 +380,7 @@ function Dashboard({ token, onLogout }) {
           <button className={`tab-btn ${tab === "stats" ? "active" : ""}`} onClick={() => setTab("stats")}>🌍 Countries</button>
           <button className={`tab-btn ${tab === "media" ? "active" : ""}`} onClick={() => setTab("media")}>🗂 Media Storage</button>
           <button className={`tab-btn ${tab === "feedback" ? "active" : ""}`} onClick={() => setTab("feedback")}>💬 Feedback</button>
+          <button className="tab-btn" onClick={() => setShowChangePw(true)}>🔑 Change Password</button>
         </div>
 
         {tab === "stats" && (
@@ -253,6 +442,7 @@ function Dashboard({ token, onLogout }) {
         )}
       </div>
 
+      {showChangePw && <ChangePasswordModal token={token} onClose={() => setShowChangePw(false)} />}
       <button className="logout-btn" onClick={onLogout}>Logout</button>
     </>
   );

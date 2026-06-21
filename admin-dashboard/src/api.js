@@ -16,7 +16,11 @@ async function request(method, path, body, token) {
 export const api = {
   getStatus:    ()                          => request("GET",  "/api/admin/status"),
   setup:        (password, confirmPassword) => request("POST", "/api/admin/setup", { password, confirmPassword }),
-  login:        (password)                  => request("POST", "/api/admin/login", { password }),
+  login:        (password)                  => request("POST", "/api/admin/login", { spassword }),
+  changePassword: (currentPassword, newPassword, confirmNewPassword, token) =>
+    request("POST", "/api/admin/change-password", { currentPassword, newPassword, confirmNewPassword }, token),
+  resetPassword: (masterKey, newPassword, confirmNewPassword) =>
+    request("POST", "/api/admin/reset-password", { masterKey, newPassword, confirmNewPassword }),
   getStats:     (token)                     => request("GET",  "/api/admin/stats", null, token),
   getMedia:     (token)                     => request("GET",  "/api/admin/media", null, token),
   deleteMedia:  (giftId, token)             => request("DELETE", `/api/admin/media/${giftId}`, null, token),
