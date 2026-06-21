@@ -80,3 +80,9 @@ model Feedback {
 
   @@index([createdAt])
 }
+
+model AdminAuth {
+  id           String   @id @default(cuid())
+  passwordHash String
+  createdAt    DateTime @default(now())
+}
